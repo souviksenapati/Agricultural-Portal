@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import TopBar from './components/TopBar';
 import Footer from './components/Footer';
 import SubFooter from './components/SubFooter';
-import Home from './pages/Home';
-import About from './pages/About';
-import SOP from './pages/SOP';
-import Helpline from './pages/Helpline';
-import FarmerSearch from './components/FarmerSearch';
 
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+
+// Lazy load route components
+const Home = React.lazy(() => import('./pages/Home'));
+const About = React.lazy(() => import('./pages/About'));
+const SOP = React.lazy(() => import('./pages/SOP'));
+const Helpline = React.lazy(() => import('./pages/Helpline'));
+const FarmerSearch = React.lazy(() => import('./components/FarmerSearch'));
 
 export default function AgriculturalPortal() {
     const location = useLocation();
@@ -23,15 +25,15 @@ export default function AgriculturalPortal() {
                 <TopBar />
                 <Header />
                 <main className="flex-grow flex flex-col items-center w-full bg-white">
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/about" element={<About />} />
-                        <Route path="/sop" element={<SOP />} />
-                        <Route path="/helpline" element={<Helpline />} />
-                        {/* Placeholder for status if needed, or redirect */}
-                        {/* <Route path="/status" element={<div className="p-8 text-center text-gray-600">Application Status Page (Use "Check Application" button in header)</div>} /> */}
-                        <Route path="/status" element={<FarmerSearch />} />
-                    </Routes>
+                    <Suspense fallback={<div className="flex-grow flex items-center justify-center p-8 text-gray-500">Loading...</div>}>
+                        <Routes>
+                            <Route path="/" element={<Home />} />
+                            <Route path="/about" element={<About />} />
+                            <Route path="/sop" element={<SOP />} />
+                            <Route path="/helpline" element={<Helpline />} />
+                            <Route path="/status" element={<FarmerSearch />} />
+                        </Routes>
+                    </Suspense>
                 </main>
                 {isHome && <Footer />}
                 <SubFooter />
