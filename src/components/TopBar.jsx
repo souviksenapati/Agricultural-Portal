@@ -71,7 +71,7 @@ export default function TopBar() {
                         <div className="p-8">
                             <div className="text-center mb-6">
                                 <h3 className="text-2xl font-bold text-gray-800">Sign In</h3>
-                                <p className="text-sm text-gray-500 mt-1">Welcome to Bhumihin Khetmajur</p>
+                                <p className="text-sm text-gray-500 mt-1">Welcome to Bhumihir Khetmajur</p>
                             </div>
 
                             <form onSubmit={handleLogin} className="space-y-4">

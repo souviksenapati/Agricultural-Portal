@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Home() {
     const [carouselIndex, setCarouselIndex] = useState(0);
+    const [animationType, setAnimationType] = useState('animate-fade-in');
     const navigate = useNavigate();
 
     const bannerImages = [
@@ -11,36 +12,47 @@ export default function Home() {
         '/image/banner_img_3.jpg'
     ];
 
+    const animations = ['animate-fade-in', 'animate-zoom-in', 'animate-slide-in-right', 'animate-slide-in-left'];
+
+    const changeSlide = (nextIndex) => {
+        setCarouselIndex(nextIndex);
+        setAnimationType(animations[Math.floor(Math.random() * animations.length)]);
+    };
+
     useEffect(() => {
         const timer = setInterval(() => {
-            setCarouselIndex((prev) => (prev + 1) % bannerImages.length);
+            changeSlide((carouselIndex + 1) % bannerImages.length);
         }, 5000);
         return () => clearInterval(timer);
-    }, [bannerImages.length]);
+    }, [carouselIndex]);
 
-    const handlePrev = () => setCarouselIndex((prev) => (prev === 0 ? bannerImages.length - 1 : prev - 1));
-    const handleNext = () => setCarouselIndex((prev) => (prev + 1) % bannerImages.length);
+    const handlePrev = () => changeSlide(carouselIndex === 0 ? bannerImages.length - 1 : carouselIndex - 1);
+    const handleNext = () => changeSlide((carouselIndex + 1) % bannerImages.length);
 
     return (
         <div className="flex flex-col items-center w-full">
             {/* Main Banner Slider */}
-            <div className="w-full mx-auto relative h-[313px] overflow-hidden">
+            <div className="w-full mx-auto relative h-[140px] sm:h-[200px] md:h-[260px] lg:h-[313px] overflow-hidden group bg-white border-b">
                 {bannerImages.map((img, index) => (
                     <div
                         key={index}
-                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === carouselIndex ? 'opacity-100' : 'opacity-0'
+                        className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === carouselIndex ? `opacity-100 z-10 ${animationType}` : 'opacity-0 z-0'
                             }`}
                     >
                         <img
                             src={img}
                             alt={`Banner ${index + 1}`}
-                            className="w-full h-full object-cover object-center"
+                            className="w-full h-full object-contain md:object-cover object-center bg-white"
                         />
                     </div>
                 ))}
 
-                <button onClick={handlePrev} className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 text-white p-3 rounded-full hover:bg-black/50 transition opacity-0 group-hover:opacity-100 z-10 cursor-pointer">&#10094;</button>
-                <button onClick={handleNext} className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 text-white p-3 rounded-full hover:bg-black/50 transition opacity-0 group-hover:opacity-100 z-10 cursor-pointer">&#10095;</button>
+                <button onClick={handlePrev} className="absolute left-0 top-1/2 -translate-y-1/2 bg-black/30 text-white w-12 h-16 flex items-center justify-center hover:bg-black/50 transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer text-2xl font-light shadow-md">
+                    <i className="fa fa-angle-left"></i>
+                </button>
+                <button onClick={handleNext} className="absolute right-0 top-1/2 -translate-y-1/2 bg-black/30 text-white w-12 h-16 flex items-center justify-center hover:bg-black/50 transition-all opacity-0 group-hover:opacity-100 z-10 cursor-pointer text-2xl font-light shadow-md">
+                    <i className="fa fa-angle-right"></i>
+                </button>
 
                 {/* Indicators */}
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
