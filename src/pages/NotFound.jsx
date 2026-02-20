@@ -2,8 +2,7 @@ import { Link } from 'react-router-dom'
 
 const NotFound = () => {
     return (
-        <div className="flex flex-col items-center justify-center  bg-gray-50 px-6 text-center">
-
+        <div className="flex flex-col items-center justify-center bg-gray-50 px-6 text-center">
             <h1 className="text-7xl sm:text-8xl md:text-9xl font-extrabold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
                 404
             </h1>
@@ -20,9 +19,8 @@ const NotFound = () => {
                 to="/"
                 className="mt-8 inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-md transition-all duration-300 text-sm sm:text-base font-medium"
             >
-                Go Back Home
+                &#8592; Back to Home
             </Link>
-
         </div>
     )
 }

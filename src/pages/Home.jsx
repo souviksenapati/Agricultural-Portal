@@ -88,10 +88,7 @@ export default function Home() {
                             <div
                                 key={card.id}
                                 onClick={() => navigate(card.link)}
-                                className="bg-[#fafafa] px-[10px] py-6 rounded-[3px] border border-[#f1f1f1] shadow-sm cursor-pointer transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center text-center group bg-white"
-                                role="button"
-                                tabIndex={0}
-                                onKeyDown={(e) => { if (e.key === 'Enter') navigate(card.link); }}
+                                className="bg-[#fafafa] px-2.5 py-10 rounded-lg border border-[#f1f1f1] shadow-lg cursor-pointer transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center text-center group bg-white"
                             >
                                 <div className="mb-4 transition-transform duration-300 group-hover:scale-110">
                                     <img src={card.icon} alt={`${card.title} Icon`} className="w-16 h-16 object-contain" loading="lazy" width="64" height="64" />

@@ -25,9 +25,9 @@ export default function Header() {
 
                     {/* Desktop Buttons */}
                     <div className="hidden sm:flex items-center gap-2">
-                        <button className="btn-primary bg-[#00ACED] text-white text-xs sm:text-sm px-4 py-2 rounded shadow-sm hover:bg-[#009bd5] transition font-medium flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer w-full sm:w-auto">
+                        <Link to={'/status'} className="btn-primary bg-[#00ACED] text-white text-xs sm:text-sm px-4 py-2 rounded shadow-sm hover:bg-[#009bd5] transition font-medium flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer w-full sm:w-auto">
                             Check Application
-                        </button>
+                        </Link>
 
                         <button className="btn-primary bg-[#00ACED] text-white text-xs sm:text-sm px-4 py-2 rounded shadow-sm hover:bg-[#009bd5] transition font-medium flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer w-full sm:w-auto">
                             New Application Form
