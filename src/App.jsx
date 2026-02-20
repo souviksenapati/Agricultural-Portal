@@ -8,6 +8,7 @@ import Home from './pages/Home';
 import About from './pages/About';
 import SOP from './pages/SOP';
 import Helpline from './pages/Helpline';
+import FarmerSearch from './components/FarmerSearch';
 
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -18,28 +19,21 @@ export default function AgriculturalPortal() {
 
     return (
         <div className="min-h-screen flex flex-col font-roboto text-[15px] bg-white relative overflow-x-hidden">
-            <AuthProvider>
-                <TopBar />
-                <Header />
-                <main className="flex-grow flex flex-col items-center w-full bg-white">
-                    <Routes>
-                        <Route path="/" element={<Home />} />
-                        <Route path="/about" element={<About />} />
-                        <Route path="/sop" element={<SOP />} />
-                        <Route path="/helpline" element={<Helpline />} />
-
-                        {/* Protected Routes Example */}
-                        <Route element={<ProtectedRoute />}>
-                            <Route path="/dashboard" element={<div className="p-16 text-center text-2xl text-green-700">Welcome to Dashboard (Protected)</div>} />
-                        </Route>
-
-                        {/* Placeholder for status if needed, or redirect */}
-                        <Route path="/status" element={<div className="p-8 text-center text-gray-600">Application Status Page (Use "Check Application" button in header)</div>} />
-                    </Routes>
-                </main>
-                {isHome && <Footer />}
-                <SubFooter />
-            </AuthProvider>
+            <TopBar />
+            <Header />
+            <main className="flex-grow flex flex-col items-center w-full bg-white">
+                <Routes>
+                    <Route path="/" element={<Home />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/sop" element={<SOP />} />
+                    <Route path="/helpline" element={<Helpline />} />
+                    {/* Placeholder for status if needed, or redirect */}
+                    {/* <Route path="/status" element={<div className="p-8 text-center text-gray-600">Application Status Page (Use "Check Application" button in header)</div>} /> */}
+                    <Route path="/status" element={<FarmerSearch />} />
+                </Routes>
+            </main>
+            {isHome && <Footer />}
+            <SubFooter />
         </div>
     );
 }
