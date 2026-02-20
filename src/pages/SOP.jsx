@@ -17,10 +17,10 @@ export default function SOP() {
                     </div>
                     <h2 className="text-2xl font-bold mb-8 text-[#1f4e79]">Standard Operating Procedure (SOP)</h2>
                     <div className="flex flex-col sm:flex-row gap-4 w-full justify-center">
-                        <button className="bg-[#1f4e79] text-white px-8 py-3 rounded shadow hover:bg-blue-800 font-semibold flex items-center justify-center gap-2 w-full sm:w-auto transition">
+                        <button className="bg-[#1f4e79] text-white px-8 py-3 rounded shadow hover:bg-blue-800 font-semibold flex items-center justify-center gap-2 w-full sm:w-auto transition cursor-pointer">
                             <span>📄</span> Download SOP (English)
                         </button>
-                        <button className="bg-[#385723] text-white px-8 py-3 rounded shadow hover:bg-green-800 font-semibold flex items-center justify-center gap-2 w-full sm:w-auto transition">
+                        <button className="bg-[#385723] text-white px-8 py-3 rounded shadow hover:bg-green-800 font-semibold flex items-center justify-center gap-2 w-full sm:w-auto transition cursor-pointer">
                             <span>📄</span> Download SOP (Bengali)
                         </button>
                     </div>

@@ -9,24 +9,23 @@ export default function Header() {
         <>
             {/* Header Top */}
             <header className="w-full bg-white border-b shadow-sm">
-                <div className="w-full flex items-center justify-between px-4 md:px-[135px] py-2">
+                <div className="w-full max-w-[1280px] mx-auto flex items-center justify-between px-4 py-3">
                     <div className="flex-shrink-0">
                         <Link to="/">
-                            <img src="/image/logo_bsb.png" alt="Govt Logo" className="h-[100px] w-auto block" />
+                            <img src="/image/logo_bsb.png" alt="Govt Logo" className="h-20 w-auto block" />
                         </Link>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <button className="bg-[#00ACED] text-white text-sm px-4 py-2 rounded shadow-sm hover:bg-[#009bd5] transition font-medium flex items-center gap-2 whitespace-nowrap">Check Application <i className="fa fa-search"></i></button>
-                        <button className="bg-[#00ACED] text-white text-sm px-4 py-2 rounded shadow-sm hover:bg-[#009bd5] transition font-medium flex items-center gap-2 whitespace-nowrap">New Application Form <i className="fa fa-download"></i></button>
-                        <button className="bg-[#00ACED] text-white text-sm px-4 py-2 rounded shadow-sm hover:bg-[#009bd5] transition font-medium flex items-center gap-2 whitespace-nowrap">Faq <i className="fa fa-question"></i></button>
+                        <button className="bg-[#00ACED] text-white text-sm px-4 py-2 rounded shadow-sm hover:bg-[#009bd5] transition font-medium flex items-center gap-2 whitespace-nowrap cursor-pointer">Check Application <i className="fa fa-search"></i></button>
+                        <button className="bg-[#00ACED] text-white text-sm px-4 py-2 rounded shadow-sm hover:bg-[#009bd5] transition font-medium flex items-center gap-2 whitespace-nowrap cursor-pointer">New Application Form <i className="fa fa-download"></i></button>
+                        <button className="bg-[#00ACED] text-white text-sm px-4 py-2 rounded shadow-sm hover:bg-[#009bd5] transition font-medium flex items-center gap-2 whitespace-nowrap cursor-pointer">Faq <i className="fa fa-question"></i></button>
                     </div>
                 </div>
             </header>
 
-            {/* Blue Marquee Bar */}
             <div className="w-full bg-[#0648b3] text-white overflow-hidden py-3">
-                <div className="w-full max-w-[930px] mx-auto whitespace-nowrap animate-marquee text-center font-medium text-lg tracking-wide">
+                <div className="w-full max-w-[1280px] mx-auto whitespace-nowrap animate-marquee text-center font-medium text-lg tracking-wide">
                     <span>Welcome to Agricultural Labour Portal</span>
                 </div>
             </div>

@@ -39,8 +39,8 @@ export default function Home() {
                     </div>
                 ))}
 
-                <button onClick={handlePrev} className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 text-white p-3 rounded-full hover:bg-black/50 transition opacity-0 group-hover:opacity-100 z-10">&#10094;</button>
-                <button onClick={handleNext} className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 text-white p-3 rounded-full hover:bg-black/50 transition opacity-0 group-hover:opacity-100 z-10">&#10095;</button>
+                <button onClick={handlePrev} className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/30 text-white p-3 rounded-full hover:bg-black/50 transition opacity-0 group-hover:opacity-100 z-10 cursor-pointer">&#10094;</button>
+                <button onClick={handleNext} className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/30 text-white p-3 rounded-full hover:bg-black/50 transition opacity-0 group-hover:opacity-100 z-10 cursor-pointer">&#10095;</button>
 
                 {/* Indicators */}
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
@@ -48,15 +48,14 @@ export default function Home() {
                         <button
                             key={idx}
                             onClick={() => setCarouselIndex(idx)}
-                            className={`w-2.5 h-2.5 rounded-full transition-all ${idx === carouselIndex ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'}`}
+                            className={`w-2.5 h-2.5 rounded-full transition-all cursor-pointer ${idx === carouselIndex ? 'bg-white scale-125' : 'bg-white/50 hover:bg-white/80'}`}
                         />
                     ))}
                 </div>
             </div>
 
-            {/* Action Cards (Normal Flow) */}
             <div className="w-full bg-[#f9f9f9]">
-                <div className="w-full max-w-[930px] mx-auto px-4 py-8">
+                <div className="w-full max-w-[1280px] mx-auto px-4 py-8">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                         {[
                             { id: 'about', title: 'About Project', desc: 'About Project', icon: '/image/menu_icon_farmer.png', link: '/about' },
@@ -81,9 +80,8 @@ export default function Home() {
                 </div>
             </div>
 
-            {/* Footer Top Image */}
             <div className="w-full bg-white py-8 border-t flex justify-center">
-                <img src="/image/footer_top_bg.png" alt="Footer Top" className="max-w-[930px] w-full h-auto object-contain" />
+                <img src="/image/footer_top_bg.png" alt="Footer Top" className="max-w-[1280px] w-full h-auto object-contain" />
             </div>
 
             {/* Client Logos */}
