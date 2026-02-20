@@ -1,20 +1,22 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import TopBar from './components/TopBar';
 import Footer from './components/Footer';
 import SubFooter from './components/SubFooter';
-import Home from './pages/Home';
-import About from './pages/About';
-import SOP from './pages/SOP';
-import Helpline from './pages/Helpline';
-import FarmerSearch from './components/FarmerSearch';
 
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Copyright from './pages/Copyright';
 import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
+
+// Lazy load route components
+const Home = React.lazy(() => import('./pages/Home'));
+const About = React.lazy(() => import('./pages/About'));
+const SOP = React.lazy(() => import('./pages/SOP'));
+const Helpline = React.lazy(() => import('./pages/Helpline'));
+const FarmerSearch = React.lazy(() => import('./components/FarmerSearch'));
 
 export default function AgriculturalPortal() {
     const location = useLocation();
