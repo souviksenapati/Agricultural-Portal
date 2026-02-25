@@ -1,59 +1,43 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { DUMMY_USERS } from '../data/mockData';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export function useAuth() {
-    return useContext(AuthContext);
+  return useContext(AuthContext);
 }
 
 export function AuthProvider({ children }) {
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        // Check session storage on mount
-        const token = sessionStorage.getItem('token');
-        if (token) {
-            // In a real app, you might validate the token with an API call here
-            setUser({ token, email: sessionStorage.getItem('userEmail') });
-        }
-        setLoading(false);
-    }, []);
+  useEffect(() => {
+    const stored = sessionStorage.getItem('portalUser');
+    if (stored) setUser(JSON.parse(stored));
+    setLoading(false);
+  }, []);
 
-    const login = async (email, password) => {
-        // Simulate API call
-        // In real backend integration: const response = await fetch('/api/login', ...);
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                if (email && password) {
-                    const fakeToken = "abc-123-token-" + Date.now();
-                    sessionStorage.setItem('token', fakeToken);
-                    sessionStorage.setItem('userEmail', email);
-                    setUser({ token: fakeToken, email });
-                    resolve({ success: true, user: { email, token: fakeToken } });
-                } else {
-                    reject({ message: "Invalid credentials" });
-                }
-            }, 1000);
-        });
-    };
-
-    const logout = () => {
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('userEmail');
-        setUser(null);
-    };
-
-    const value = {
-        user,
-        login,
-        logout,
-        loading
-    };
-
-    return (
-        <AuthContext.Provider value={value}>
-            {!loading && children}
-        </AuthContext.Provider>
+  const login = (email, password) => {
+    const found = DUMMY_USERS.find(
+      (u) => u.email === email.trim() && u.password === password
     );
+    if (found) {
+      const { password: _p, ...safeUser } = found;
+      sessionStorage.setItem('portalUser', JSON.stringify(safeUser));
+      setUser(safeUser);
+      return { success: true, user: safeUser };
+    }
+    return { success: false, message: 'Invalid email or password.' };
+  };
+
+  const logout = () => {
+    sessionStorage.removeItem('portalUser');
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, logout, loading }}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 }

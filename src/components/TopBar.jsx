@@ -12,14 +12,24 @@ export default function TopBar() {
     const [error, setError] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleLogin = async (e) => {
+    const handleLogin = (e) => {
         e.preventDefault();
         setError('');
         setIsSubmitting(true);
         try {
-            await login(email, password);
-            setIsLoginModalOpen(false);
-            navigate('/dashboard'); // Optional: redirect to dashboard on login
+            const result = login(email, password);
+            if (result.success) {
+                setIsLoginModalOpen(false);
+                const roleHome = {
+                    gramdoot: '/portal/dashboard',
+                    ada: '/portal/ada/dashboard',
+                    sno: '/portal/sno/dashboard',
+                    bank: '/portal/bank/dashboard',
+                };
+                navigate(roleHome[result.user.role] || '/portal/login');
+            } else {
+                setError(result.message || 'Invalid email or password.');
+            }
         } catch (err) {
             setError(err.message || 'Login failed');
         } finally {
