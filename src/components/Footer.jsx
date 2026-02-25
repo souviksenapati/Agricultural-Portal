@@ -28,7 +28,7 @@ export default function Footer() {
                                 <Link
                                     key={i}
                                     to={item.path}
-                                    className="text-[#09afdf] text-sm w-fit hover:bg-gray-300 p-2 hover:rounded-lg"
+                                    className="text-[#09afdf] text-sm w-fit hover:bg-gray-200 p-2 hover:rounded-md hover:duration-500"
                                 >
                                     {item.name}
                                 </Link>
