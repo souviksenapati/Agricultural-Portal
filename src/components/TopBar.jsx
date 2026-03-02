@@ -37,6 +37,7 @@ export default function TopBar() {
       const result = login(email, password);
       if (result.success) {
         setIsLoginModalOpen(false);
+        sessionStorage.setItem('km_just_logged_in', '1');
         navigate(ROLE_HOME[result.user.role] || '/');
       } else {
         setError(result.message || 'Invalid email or password.');

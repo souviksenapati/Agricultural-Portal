@@ -54,7 +54,7 @@ export default function ViewApplication() {
   if (!rec) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
-        <PortalHeader />
+        {/* <PortalHeader /> */}
         <main className="flex-grow flex items-center justify-center px-4 text-center text-gray-500">
           <div>
             Application not found.{' '}
@@ -66,7 +66,7 @@ export default function ViewApplication() {
             </button>
           </div>
         </main>
-        <PortalFooter />
+        {/* <PortalFooter /> */}
       </div>
     );
   }
@@ -84,7 +84,7 @@ export default function ViewApplication() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <PortalHeader />
+      {/* <PortalHeader /> */}
 
       <main className="flex-grow w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
@@ -232,7 +232,7 @@ export default function ViewApplication() {
         </div>
       </main>
 
-      <PortalFooter />
+      {/* <PortalFooter /> */}
     </div>
   );
 }

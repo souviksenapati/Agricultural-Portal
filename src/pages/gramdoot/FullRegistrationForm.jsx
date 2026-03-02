@@ -115,11 +115,11 @@ export default function FullRegistrationForm() {
   if (!record) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
-        <PortalHeader />
+        {/* <PortalHeader /> */}
         <main className="flex-grow max-w-7xl mx-auto px-4 py-12 text-center text-gray-500">
           Application not found.
         </main>
-        <PortalFooter />
+        {/* <PortalFooter /> */}
       </div>
     );
   }
@@ -159,7 +159,7 @@ export default function FullRegistrationForm() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <PortalHeader />
+      {/* <PortalHeader /> */}
 
       <main className="flex-grow w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 py-5 sm:py-6">
 
@@ -206,7 +206,7 @@ export default function FullRegistrationForm() {
 
       </main>
 
-      <PortalFooter />
+      {/* <PortalFooter /> */}
     </div>
   );
 }

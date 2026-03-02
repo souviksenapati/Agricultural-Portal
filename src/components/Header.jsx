@@ -18,11 +18,15 @@ export default function Header() {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [quickRegOpen, setQuickRegOpen] = useState(false);
+  const [adaMenuOpen,  setAdaMenuOpen]  = useState(false);
   const navRef = useRef(null);
 
   useEffect(() => {
     const handler = (e) => {
-      if (navRef.current && !navRef.current.contains(e.target)) setQuickRegOpen(false);
+      if (navRef.current && !navRef.current.contains(e.target)) {
+        setQuickRegOpen(false);
+        setAdaMenuOpen(false);
+      }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
@@ -87,12 +91,37 @@ export default function Header() {
               )}
 
               {user.role === 'ada' && (
-                <Link
-                  to="/portal/ada/dashboard"
-                  className={`hover:text-[#0891b2] transition-colors ${location.pathname.startsWith('/portal/ada') ? 'text-[#0891b2] font-semibold' : ''}`}
-                >
-                  Applications Review
-                </Link>
+                <div className="relative" ref={navRef}>
+                  <button
+                    onClick={() => setAdaMenuOpen(!adaMenuOpen)}
+                    className={`flex items-center gap-1 hover:text-[#0891b2] transition-colors ${
+                      location.pathname.startsWith('/portal/ada') ? 'text-[#0891b2] font-semibold' : ''
+                    }`}
+                  >
+                    Registered Applicant List
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {adaMenuOpen && (
+                    <div className="absolute left-0 mt-2 w-52 bg-white border border-gray-200 rounded shadow-lg z-50">
+                      <Link
+                        to="/portal/ada/applications"
+                        onClick={() => setAdaMenuOpen(false)}
+                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#0891b2]"
+                      >
+                        Registered Applicant List
+                      </Link>
+                      <Link
+                        to="/portal/ada/pending"
+                        onClick={() => setAdaMenuOpen(false)}
+                        className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 hover:text-[#0891b2] border-t border-gray-100"
+                      >
+                        Pending List
+                      </Link>
+                    </div>
+                  )}
+                </div>
               )}
 
               {user.role === 'sno' && (
