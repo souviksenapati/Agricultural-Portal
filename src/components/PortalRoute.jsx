@@ -6,7 +6,7 @@ import { useAuth } from '../context/AuthContext';
 export default function PortalRoute({ role, children }) {
   const { user } = useAuth();
 
-  if (!user) return <Navigate to="/portal/login" replace />;
+  if (!user) return <Navigate to="/" replace />;
   if (role && user.role !== role) {
     // Redirect to the correct role home
     const homes = {
@@ -15,7 +15,7 @@ export default function PortalRoute({ role, children }) {
       sno: '/portal/sno/dashboard',
       bank: '/portal/bank/dashboard',
     };
-    return <Navigate to={homes[user.role] || '/portal/login'} replace />;
+    return <Navigate to={homes[user.role] || '/'} replace />;
   }
 
   return children;
