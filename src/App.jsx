@@ -27,6 +27,7 @@ const FullRegistrationForm = React.lazy(() => import('./pages/gramdoot/FullRegis
 const ViewApplication      = React.lazy(() => import('./pages/gramdoot/ViewApplication'));
 const ApplicantList        = React.lazy(() => import('./pages/gramdoot/ApplicantList'));
 const ADADashboard         = React.lazy(() => import('./pages/ada/Dashboard'));
+const ADAApplicantList     = React.lazy(() => import('./pages/ada/ApplicantList'));
 const SNODashboard         = React.lazy(() => import('./pages/sno/Dashboard'));
 const BankDashboard        = React.lazy(() => import('./pages/bank/Dashboard'));
 
@@ -84,6 +85,10 @@ export default function App() {
             {/*  ADA  */}
             <Route path="/portal/ada/dashboard"
               element={<AppLayout wrapMain={false}><PortalRoute role="ada"><ADADashboard /></PortalRoute></AppLayout>} />
+            <Route path="/portal/ada/applications"
+              element={<AppLayout wrapMain={false}><PortalRoute role="ada"><ADAApplicantList /></PortalRoute></AppLayout>} />
+            <Route path="/portal/ada/pending"
+              element={<AppLayout wrapMain={false}><PortalRoute role="ada"><ADAApplicantList /></PortalRoute></AppLayout>} />
             <Route path="/portal/ada/registration/:id/view"
               element={<AppLayout wrapMain={false}><PortalRoute role="ada"><ViewApplication /></PortalRoute></AppLayout>} />
 
