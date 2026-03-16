@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApplicants } from '../../context/ApplicantContext';
@@ -8,8 +8,10 @@ const PAGE_SIZE = 20;
 
 export default function ApplicantList() {
   const { user } = useAuth();
-  const { applicants } = useApplicants();
+  const { applicants, loadFarmers } = useApplicants();
   const navigate = useNavigate();
+
+  useEffect(() => { loadFarmers(); }, []);
 
   // Search state
   const [search, setSearch] = useState({ ackId: '', name: '', aadhaar: '', mobile: '' });

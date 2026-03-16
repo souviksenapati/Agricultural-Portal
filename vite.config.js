@@ -4,6 +4,20 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+    server: {
+        proxy: {
+            '/api': {
+                target: 'http://144.76.19.201:3002',
+                changeOrigin: true,
+                // No rewrite — backend expects the /api prefix in the URL
+            },
+            '/oauth': {
+                target: 'http://144.76.19.201:3002',
+                changeOrigin: true,
+                // OAuth token endpoint lives at root (no /api prefix)
+            },
+        },
+    },
     plugins: [
         react(),
         tailwindcss(),

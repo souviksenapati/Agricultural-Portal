@@ -29,18 +29,19 @@ export default function TopBar() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setIsSubmitting(true);
     try {
-      const result = login(email, password);
+      const result = await login(email, password);
       if (result.success) {
         setIsLoginModalOpen(false);
+        setEmail(''); setPassword('');
         sessionStorage.setItem('km_just_logged_in', '1');
         navigate(ROLE_HOME[result.user.role] || '/');
       } else {
-        setError(result.message || 'Invalid email or password.');
+        setError(result.message || 'Invalid credentials or OTP.');
       }
     } catch (err) {
       setError(err.message || 'Login failed');

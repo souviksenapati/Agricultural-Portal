@@ -2,6 +2,7 @@ import React, { Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ApplicantProvider } from './context/ApplicantContext';
+import { DataDirsProvider } from './context/DataDirsContext';
 
 //  Shared layout components 
 import TopBar    from './components/TopBar';
@@ -55,9 +56,10 @@ function AppLayout({ children, wrapMain = true }) {
 export default function App() {
   return (
     <AuthProvider>
-      <ApplicantProvider>
-        <Suspense fallback={<div className="p-12 text-center text-gray-500">Loading...</div>}>
-          <Routes>
+      <DataDirsProvider>
+        <ApplicantProvider>
+          <Suspense fallback={<div className="p-12 text-center text-gray-500">Loading...</div>}>
+            <Routes>
             {/*  Public pages  */}
             <Route path="/"          element={<AppLayout><Home /></AppLayout>} />
             <Route path="/about"     element={<AppLayout><About /></AppLayout>} />
@@ -105,8 +107,9 @@ export default function App() {
             {/*  404  */}
             <Route path="*" element={<AppLayout><NotFound /></AppLayout>} />
           </Routes>
-        </Suspense>
-      </ApplicantProvider>
+          </Suspense>
+        </ApplicantProvider>
+      </DataDirsProvider>
     </AuthProvider>
   );
 }

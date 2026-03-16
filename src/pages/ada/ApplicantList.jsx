@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApplicants } from '../../context/ApplicantContext';
+import { useDataDirs } from '../../context/DataDirsContext';
 
 export default function ADAApplicantList() {
   const navigate = useNavigate();
@@ -9,7 +10,10 @@ export default function ADAApplicantList() {
   const gpFilter    = params.get('gp') || '';
   const isPending   = pathname.endsWith('/pending');
 
-  const { applicants, approveApplicant, rejectApplicant, deleteApplicant } = useApplicants();
+  const { applicants, approveApplicant, rejectApplicant, deleteApplicant, loadFarmers } = useApplicants();
+  const { districtName, blockName } = useDataDirs();
+
+  useEffect(() => { loadFarmers(); }, []);
 
   // Search field states (applied only on Search click)
   const [ackInput,    setAckInput]    = useState('');
@@ -19,6 +23,7 @@ export default function ADAApplicantList() {
   const [applied, setApplied] = useState({ ack: '', name: '', aadhaar: '', mobile: '' });
 
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [actionError, setActionError] = useState('');
 
   const handleSearch = () => setApplied({ ack: ackInput, name: nameInput, aadhaar: aadhaarInput, mobile: mobileInput });
   const handleReset  = () => {
@@ -106,6 +111,14 @@ export default function ADAApplicantList() {
             </div>
           </div>
 
+          {/* Action error banner */}
+          {actionError && (
+            <div className="mb-3 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2 rounded">
+              <span className="flex-1">{actionError}</span>
+              <button onClick={() => setActionError('')} className="text-red-400 hover:text-red-700 text-lg leading-none">&times;</button>
+            </div>
+          )}
+
           {/* List heading */}
           <p className="text-[#0891b2] font-bold text-sm mb-2">{listHeading}</p>
 
@@ -141,12 +154,12 @@ export default function ADAApplicantList() {
                       <td className={`px-3 py-2 text-center font-mono text-xs text-gray-600 border-r border-gray-100${isPending ? '' : ''}`}>{row.mobile}</td>
                       {isPending && (
                         <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">
-                          {row.fullForm?.district || '—'}
+                          {districtName(row.fullForm?.district) || '—'}
                         </td>
                       )}
                       {isPending && (
                         <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">
-                          {row.fullForm?.block || '—'}
+                          {blockName(row.fullForm?.block) || '—'}
                         </td>
                       )}
                       <td className="px-3 py-2 text-center">
@@ -155,12 +168,18 @@ export default function ADAApplicantList() {
                             <EyeIcon />
                           </ActionBtn>
                           {(row.status === 'pending' || row.status === 'rejected') && (
-                            <ActionBtn color="green" title="Approve" onClick={() => approveApplicant(row.id)}>
+                            <ActionBtn color="green" title="Approve" onClick={async () => {
+                              try { await approveApplicant(row.id); }
+                              catch (e) { setActionError(e.message || 'Approve failed'); }
+                            }}>
                               <CheckIcon />
                             </ActionBtn>
                           )}
                           {(row.status === 'pending' || row.status === 'approved') && (
-                            <ActionBtn color="orange" title="Reject" onClick={() => rejectApplicant(row.id)}>
+                            <ActionBtn color="orange" title="Reject" onClick={async () => {
+                              try { await rejectApplicant(row.id); }
+                              catch (e) { setActionError(e.message || 'Reject failed'); }
+                            }}>
                               <XIcon />
                             </ActionBtn>
                           )}
@@ -198,7 +217,15 @@ export default function ADAApplicantList() {
               <div className="flex justify-end gap-2">
                 <button onClick={() => setConfirmDelete(null)} className="bg-gray-200 hover:bg-gray-300 text-gray-700 text-sm font-medium px-5 py-1.5 rounded">Cancel</button>
                 <button
-                  onClick={() => { deleteApplicant(confirmDelete.id); setConfirmDelete(null); }}
+                  onClick={async () => {
+                  try {
+                    await deleteApplicant(confirmDelete.id);
+                    setConfirmDelete(null);
+                  } catch (e) {
+                    setConfirmDelete(null);
+                    setActionError(e.message || 'Delete failed');
+                  }
+                }}
                   className="bg-red-600 hover:bg-red-700 text-white text-sm font-medium px-5 py-1.5 rounded"
                 >
                   Delete

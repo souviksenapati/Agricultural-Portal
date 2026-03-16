@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApplicants } from '../../context/ApplicantContext';
+import { useDataDirs } from '../../context/DataDirsContext';
+import { useAuth } from '../../context/AuthContext';
 import PortalHeader from '../../components/Header';
 import PortalFooter from '../../components/Footer';
 
@@ -45,6 +47,9 @@ export default function ViewApplication() {
   const { id } = useParams();
   const { applicants } = useApplicants();
   const navigate = useNavigate();
+
+  const { districtName, blockName, gpName, mouzaName, villageName } = useDataDirs();
+  const { user } = useAuth();
 
   const rec = applicants.find(
     (a) => String(a.id) === String(id)
@@ -142,13 +147,13 @@ export default function ViewApplication() {
           {/* SECTION 3 */}
           <Section title="Applicant Address Details" />
           <Row>
-            <Field label="District" value={f.district} />
-            <Field label="Block" value={f.block} />
-            <Field label="Gram Panchayat" value={f.gramPanchayat} />
+            <Field label="District" value={districtName(f.district)} />
+            <Field label="Block" value={blockName(f.block)} />
+            <Field label="Gram Panchayat" value={gpName(f.gramPanchayat)} />
           </Row>
           <Row>
-            <Field label="Mouza" value={f.mouza} />
-            <Field label="Village" value={f.village} />
+            <Field label="Mouza" value={mouzaName(f.mouza)} />
+            <Field label="Village" value={villageName(f.village)} />
             <Field label="Address" value={f.address} />
           </Row>
           <Row>
@@ -217,8 +222,7 @@ export default function ViewApplication() {
               Back
             </button>
 
-            {(rec.status === 'pending' ||
-              rec.status === 'rejected') && (
+            {user?.role === 'gramdoot' && (rec.status === 'pending' || rec.status === 'rejected') && (
                 <button
                   onClick={() =>
                     navigate(`/portal/registration/${rec.id}/edit`)

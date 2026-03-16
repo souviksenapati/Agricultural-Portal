@@ -1,15 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApplicants } from '../../context/ApplicantContext';
-import PortalHeader from '../../components/Header';
-import PortalFooter from '../../components/Footer';
 
 export default function GramdootDashboard() {
   const { user } = useAuth();
-  const { applicants } = useApplicants();
+  const { applicants, loadFarmers } = useApplicants();
 
-  // Count non-deleted applicants (in real app this would be per-gramdoot)
+  // Pull latest farmer list from server on every mount
+  useEffect(() => { loadFarmers(); }, []);
+
   const total = applicants.filter((a) => a.status !== 'deleted').length;
 
   return (

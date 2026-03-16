@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useApplicants } from '../../context/ApplicantContext';
 
 
 export default function BankDashboard() {
   const { user } = useAuth();
-  const { applicants, markProcessed } = useApplicants();
+  const { applicants, markProcessed, loadFarmers } = useApplicants();
   const [viewRecord, setViewRecord] = useState(null);
+  const [actionError, setActionError] = useState('');
+
+  useEffect(() => { loadFarmers(); }, []);
 
   // Bank sees only sent_to_bank and processed
   const list = applicants.filter((a) => a.status === 'sent_to_bank' || a.status === 'processed');
@@ -20,6 +23,13 @@ export default function BankDashboard() {
         <p className="text-center text-sm text-gray-500 mb-8">
           Logged in as: <strong>{user?.email}</strong>
         </p>
+
+        {actionError && (
+          <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2 rounded">
+            <span className="flex-1">{actionError}</span>
+            <button onClick={() => setActionError('')} className="text-red-400 hover:text-red-700 text-lg leading-none">&times;</button>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4 mb-8 max-w-xs">
           <div className="border-l-4 border-blue-500 text-blue-700 bg-white shadow-sm rounded p-4">
@@ -69,7 +79,7 @@ export default function BankDashboard() {
                         <EyeIcon />
                       </button>
                       {row.status === 'sent_to_bank' && (
-                        <button onClick={() => markProcessed(row.id)} title="Mark DBT Processed"
+                        <button onClick={async () => { try { await markProcessed(row.id); } catch(e) { setActionError(e.message || 'Failed to mark as processed'); } }} title="Mark DBT Processed"
                           className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-medium px-2.5 py-1.5 rounded whitespace-nowrap">
                           ✓ DBT Done
                         </button>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApplicants } from '../../context/ApplicantContext';
@@ -7,7 +7,10 @@ import { useApplicants } from '../../context/ApplicantContext';
 export default function SNODashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { applicants, sendToBank, revertToADA } = useApplicants();
+  const { applicants, sendToBank, revertToADA, loadFarmers } = useApplicants();
+  const [actionError, setActionError] = useState('');
+
+  useEffect(() => { loadFarmers(); }, []);
 
   // SNO sees only approved applications (sent from ADA)
   const list = applicants.filter((a) => a.status === 'approved' || a.status === 'sent_to_bank');
@@ -20,6 +23,13 @@ export default function SNODashboard() {
         <p className="text-center text-sm text-gray-500 mb-8">
           Logged in as: <strong>{user?.email}</strong>
         </p>
+
+        {actionError && (
+          <div className="mb-4 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2 rounded">
+            <span className="flex-1">{actionError}</span>
+            <button onClick={() => setActionError('')} className="text-red-400 hover:text-red-700 text-lg leading-none">&times;</button>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-4 mb-8 max-w-xs">
           <div className="border-l-4 border-green-500 text-green-700 bg-white shadow-sm rounded p-4">
@@ -71,11 +81,11 @@ export default function SNODashboard() {
                       </button>
                       {row.status === 'approved' && (
                         <>
-                          <button onClick={() => sendToBank(row.id)} title="Send to Bank"
+                          <button onClick={async () => { try { await sendToBank(row.id); } catch(e) { setActionError(e.message || 'Failed to send to bank'); } }} title="Send to Bank"
                             className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium px-2.5 py-1.5 rounded whitespace-nowrap">
                             → Bank
                           </button>
-                          <button onClick={() => revertToADA(row.id)} title="Revert to ADA"
+                          <button onClick={async () => { try { await revertToADA(row.id); } catch(e) { setActionError(e.message || 'Failed to revert to ADA'); } }} title="Revert to ADA"
                             className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-medium px-2.5 py-1.5 rounded whitespace-nowrap">
                             ↩ ADA
                           </button>

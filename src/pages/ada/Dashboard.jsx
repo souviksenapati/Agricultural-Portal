@@ -1,11 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApplicants } from '../../context/ApplicantContext';
+import { useDataDirs } from '../../context/DataDirsContext';
 
 
 export default function ADADashboard() {
   const navigate = useNavigate();
-  const { applicants } = useApplicants();
+  const { applicants, loadFarmers } = useApplicants();
+  const { gpName } = useDataDirs();
+
+  // Pull latest data from server on mount
+  useEffect(() => { loadFarmers(); }, []);
 
   // Flash message — shown once right after login
   const [showWelcome] = useState(() => {
@@ -20,23 +25,28 @@ export default function ADADashboard() {
     [applicants]
   );
 
-  // Group by Gram Panchayat
+  // Group by Gram Panchayat ID (key = numeric id string, display via gpName)
   const gpRows = useMemo(() => {
     const map = {};
     visible.forEach((a) => {
-      const gp = a.fullForm?.gramPanchayat || '—';
-      if (!map[gp]) map[gp] = { total: 0, approved: 0, rejected: 0, pending: 0 };
-      map[gp].total++;
+      const gpId = a.fullForm?.gramPanchayat || '';
+      const key = gpId || '—';
+      if (!map[key]) map[key] = { total: 0, approved: 0, rejected: 0, pending: 0 };
+      map[key].total++;
       if (a.status === 'approved' || a.status === 'sent_to_bank' || a.status === 'processed') {
-        map[gp].approved++;
+        map[key].approved++;
       } else if (a.status === 'rejected') {
-        map[gp].rejected++;
+        map[key].rejected++;
       } else {
-        map[gp].pending++;
+        map[key].pending++;
       }
     });
-    return Object.entries(map).sort(([a], [b]) => a.localeCompare(b));
-  }, [visible]);
+    return Object.entries(map).sort(([a], [b]) => {
+      const nameA = gpName(a) || a;
+      const nameB = gpName(b) || b;
+      return nameA.localeCompare(nameB);
+    });
+  }, [visible, gpName]);
 
   const totals = gpRows.reduce(
     (acc, [, v]) => ({
@@ -51,7 +61,7 @@ export default function ADADashboard() {
   const downloadCSV = () => {
     const header = 'Sl No,Gram Panchayat,Total Submitted,Approved,Rejected,Pending\n';
     const rows = gpRows
-      .map(([gp, v], i) => `${i + 1},"${gp}",${v.total},${v.approved},${v.rejected},${v.pending}`)
+      .map(([gpId, v], i) => `${i + 1},"${gpName(gpId) || gpId}",${v.total},${v.approved},${v.rejected},${v.pending}`)
       .join('\n');
     const total = `Total,,${totals.total},${totals.approved},${totals.rejected},${totals.pending}`;
     const blob = new Blob([header + rows + '\n' + total], { type: 'text/csv' });
@@ -126,7 +136,7 @@ export default function ADADashboard() {
                         onClick={() => navigate(`/portal/ada/applications?gp=${encodeURIComponent(gp)}`)}
                         className="text-[#0891b2] hover:underline font-medium"
                       >
-                        {gp}
+                        {gpName(gp) || gp}
                       </button>
                     </td>
                     <td className="px-4 py-2 text-center text-gray-600 border-r border-gray-100">{v.total}</td>

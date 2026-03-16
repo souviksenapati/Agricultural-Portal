@@ -1,38 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useApplicants } from '../../context/ApplicantContext';
-import PortalHeader from '../../components/Header';
-import PortalFooter from '../../components/Footer';
+import { useDataDirs } from '../../context/DataDirsContext';
 
 export default function RegistrationForm() {
   const { user } = useAuth();
-  const { applicants, addApplicant, updateApplicant } = useApplicants();
+  const { addApplicant } = useApplicants();
+  const { blockName, districtName } = useDataDirs();
   const navigate = useNavigate();
-  const { id } = useParams();
 
-  const editRecord = id
-    ? applicants.find((a) => String(a.id) === String(id))
-    : null;
-
-  const [form, setForm] = useState({
-    name: '',
-    aadhaar: '',
-    mobile: '',
-  });
-
+  const [form, setForm] = useState({ name: '', aadhaar: '', mobile: '' });
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState('');
-
-  useEffect(() => {
-    if (editRecord) {
-      setForm({
-        name: editRecord.name,
-        aadhaar: editRecord.aadhaar,
-        mobile: editRecord.mobile,
-      });
-    }
-  }, [editRecord]);
+  const [submitting, setSubmitting] = useState(false);
 
   const validate = () => {
     const e = {};
@@ -57,7 +38,7 @@ export default function RegistrationForm() {
     setSuccess('');
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
 
@@ -66,17 +47,15 @@ export default function RegistrationForm() {
       return;
     }
 
-    if (editRecord) {
-      updateApplicant(editRecord.id, form);
-      setSuccess(
-        `Record updated successfully (Ack ID: ${editRecord.ackId})`
-      );
-    } else {
-      const newEntry = addApplicant(form);
-      setSuccess(
-        `Application submitted! Acknowledgement ID: ${newEntry.ackId}`
-      );
+    setSubmitting(true);
+    try {
+      const newEntry = await addApplicant(form, user);
+      setSuccess(`Application submitted! Acknowledgement ID: ${newEntry.ackId}`);
       setForm({ name: '', aadhaar: '', mobile: '' });
+    } catch (err) {
+      setErrors({ _form: err.message || 'Submission failed. Please try again.' });
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -105,7 +84,8 @@ export default function RegistrationForm() {
             </div>
             <div>
               <span className="font-semibold">Block Name:</span>{' '}
-              {user?.blockName}
+              {blockName(user?.working_zone?.block_id)}
+              {user?.working_zone?.district_id ? ` (${districtName(user.working_zone.district_id)})` : ''}
             </div>
           </div>
         </div>
@@ -113,9 +93,7 @@ export default function RegistrationForm() {
         {/* Form Card */}
         <div className="max-w-6xl mx-auto bg-white shadow-md rounded-xl p-5 sm:p-8">
           <h3 className="text-[#0891b2] font-bold text-base sm:text-lg mb-2">
-            {editRecord
-              ? 'Edit Applicant Record'
-              : 'Applicant Registration Form'}
+            Applicant Registration Form
           </h3>
 
           <hr className="border-gray-200 mb-6" />
@@ -124,16 +102,12 @@ export default function RegistrationForm() {
             <div className="mb-6 bg-green-50 border border-green-300 text-green-700 text-sm px-4 py-3 rounded-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <span>{success}</span>
 
-              {!editRecord && (
-                <button
-                  onClick={() =>
-                    navigate('/portal/quick-registration/list')
-                  }
+              <button
+                  onClick={() => navigate('/portal/quick-registration/list')}
                   className="underline text-green-800 font-medium text-sm"
                 >
                   View List
                 </button>
-              )}
             </div>
           )}
 
@@ -203,26 +177,20 @@ export default function RegistrationForm() {
               </div>
             </div>
 
+            {/* API-level error */}
+            {errors._form && (
+              <p className="text-red-600 text-sm text-center">{errors._form}</p>
+            )}
+
             {/* Buttons */}
             <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
               <button
                 type="submit"
-                className="w-full sm:w-auto bg-[#4caf50] hover:bg-[#388e3c] text-white font-semibold text-sm px-10 py-2.5 rounded-md transition-all duration-200"
+                disabled={submitting}
+                className="w-full sm:w-auto bg-[#4caf50] hover:bg-[#388e3c] disabled:opacity-60 text-white font-semibold text-sm px-10 py-2.5 rounded-md transition-all duration-200"
               >
-                {editRecord ? 'Update' : 'Submit'}
+                {submitting ? 'Submitting…' : 'Submit'}
               </button>
-
-              {editRecord && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    navigate('/portal/quick-registration/list')
-                  }
-                  className="w-full sm:w-auto bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold text-sm px-6 py-2.5 rounded-md transition-all duration-200"
-                >
-                  Cancel
-                </button>
-              )}
             </div>
           </form>
         </div>
