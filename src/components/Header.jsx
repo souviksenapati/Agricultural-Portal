@@ -637,5 +637,61 @@ export default function Header() {
     );
   }
 
-  return null;
+  return (
+    <>
+      <header className="bg-white border-b shadow-sm">
+        <div className="max-w-[1280px] mx-auto flex items-center justify-between px-4 py-3">
+          <Link to="/">
+            <img
+              src="/image/logo_bsb.png"
+              alt="Govt Logo"
+              className="h-16 w-auto"
+            />
+          </Link>
+
+          <div className="hidden sm:flex gap-2">
+            <Link
+              to="/status"
+              className="bg-[#00ACED] text-white px-4 py-2 rounded"
+            >
+              Check Application
+            </Link>
+            <button className="bg-[#00ACED] text-white px-4 py-2 rounded">
+              New Application Form
+            </button>
+            <button className="bg-[#00ACED] text-white px-4 py-2 rounded">
+              Faq
+            </button>
+          </div>
+
+          <div className="sm:hidden">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
+            </button>
+          </div>
+        </div>
+
+        {isMenuOpen && (
+          <div className="sm:hidden px-4 pb-4 flex flex-col gap-2 bg-white border-t">
+            <Link
+              to="/status"
+              className="bg-[#00ACED] text-center text-white px-4 py-2 rounded"
+            >
+              Check Application
+            </Link>
+            <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">
+              New Application Form
+            </button>
+            <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">
+              Faq
+            </button>
+          </div>
+        )}
+      </header>
+
+      <div className="bg-[#0648b3] text-white py-2 text-center font-medium">
+        Welcome to Agricultural Labour Portal
+      </div>
+    </>
+  );
 }
