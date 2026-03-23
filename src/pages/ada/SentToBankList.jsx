@@ -34,7 +34,7 @@ export default function SentToBankList() {
 
     return (
         <>
-            <main className="flex-grow w-full px-4 py-8">
+            <main className="grow w-full px-4 py-8">
                 <div className="max-w-7xl mx-auto">
 
                     {/* Page heading */}

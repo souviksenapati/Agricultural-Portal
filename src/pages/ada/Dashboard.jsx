@@ -50,10 +50,10 @@ export default function ADADashboard() {
 
   const totals = gpRows.reduce(
     (acc, [, v]) => ({
-      total:    acc.total    + v.total,
+      total: acc.total + v.total,
       approved: acc.approved + v.approved,
       rejected: acc.rejected + v.rejected,
-      pending:  acc.pending  + v.pending,
+      pending: acc.pending + v.pending,
     }),
     { total: 0, approved: 0, rejected: 0, pending: 0 }
   );
@@ -74,7 +74,7 @@ export default function ADADashboard() {
   };
 
   return (
-    <main className="flex-grow w-full px-0 py-0">
+    <main className="grow w-full px-0 py-0">
       {/* Signed in banner */}
       {showWelcome && (
         <div className="w-full bg-[#d9edf7] border-b border-[#bcdff1] px-6 py-3 text-[#31708f] text-sm font-medium">
@@ -98,7 +98,7 @@ export default function ADADashboard() {
           </button>
           <div className="text-sm text-gray-700 font-medium flex items-center gap-2">
             Quick Registration Application Count :
-            <span className="inline-flex items-center justify-center bg-[#555] text-white text-xs font-bold rounded-full h-7 px-3 min-w-[28px]">
+            <span className="inline-flex items-center justify-center bg-[#555] text-white text-xs font-bold rounded-full h-7 px-3 min-w-7">
               {visible.length}
             </span>
           </div>

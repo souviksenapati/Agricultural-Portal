@@ -51,7 +51,7 @@ function AppLayout({ children, wrapMain = true }) {
       <TopBar />
       <Header />
       {wrapMain ? (
-        <main className="flex-grow flex flex-col items-center w-full bg-white">{children}</main>
+        <main className="grow flex flex-col items-center w-full bg-white">{children}</main>
       ) : (
         children
       )}

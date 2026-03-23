@@ -1306,7 +1306,7 @@ export default function Header() {
   return (
     <>
       <header className="bg-white border-b shadow-sm">
-        <div className="max-w-[1280px] mx-auto flex items-center justify-between px-4 py-3">
+        <div className="max-w-7xl mx-auto flex items-center justify-between px-4 py-3">
           <Link to="/">
             <img src="/image/logo_bsb.png" alt="Govt Logo" className="h-16 w-auto" />
           </Link>
