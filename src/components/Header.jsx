@@ -1104,6 +1104,15 @@ export default function Header() {
                     className="flex gap-1"
                   >
                     Quick Registration
+                    <svg
+                      className="w-3.5 h-3.5 ml-1"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </button>
 
                   {quickRegOpen && (
@@ -1129,9 +1138,18 @@ export default function Header() {
                       setMisMenuOpen(false);
                       setMemberMenuOpen(false);
                     }}
-                    className="flex items-center gap-1 hover:text-[#0891b2]"
+                    className="flex items-center gap-1 hover:text-[#0891b2] hover:cursor-pointer"
                   >
                     Applicant List
+                    <svg
+                      className="w-3.5 h-3.5 ml-1"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </button>
 
                   {adaMenuOpen && (
@@ -1158,9 +1176,18 @@ export default function Header() {
                       setAdaMenuOpen(false);
                       setMemberMenuOpen(false);
                     }}
-                    className="flex items-center gap-1 hover:text-[#0891b2]"
+                    className="flex items-center gap-1 hover:text-[#0891b2] hover:cursor-pointer"
                   >
                     MIS
+                    <svg
+                      className="w-3.5 h-3.5 ml-1"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
                   </button>
 
                   {misMenuOpen && (
@@ -1182,15 +1209,24 @@ export default function Header() {
                       setAdaMenuOpen(false);
                       setMisMenuOpen(false);
                     }}
-                    className="flex items-center gap-1 hover:text-[#0891b2]"
+                    className="flex items-center gap-1 hover:text-[#0891b2] hover:cursor-pointer"
                   >
                     Member
+                    <svg
+                      className="w-3.5 h-3.5 ml-1"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+//                     </svg>
                   </button>
 
                   {memberMenuOpen && (
                     <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg">
-                      <Link to="/portal/member/demo1" className="block px-4 py-2">New Member</Link>
-                      <Link to="/portal/member/demo2" className="block px-4 py-2">Member List</Link>
+                      <Link to="/portal/ada/members/new" className="block px-4 py-2">New Member</Link>
+                      <Link to="/portal/ada/members" className="block px-4 py-2">Member List</Link>
                     </div>
                   )}
                 </div>
@@ -1251,8 +1287,8 @@ export default function Header() {
 
                 <div>
                   <p className="font-semibold">Member</p>
-                  <Link to="/portal/member/demo1" className="block pl-3 py-1">New Member</Link>
-                  <Link to="/portal/member/demo2" className="block pl-3 py-1">Member List</Link>
+                  <Link to="/portal/ada/members/new" className="block pl-3 py-1">New Member</Link>
+                  <Link to="/portal/ada/members" className="block pl-3 py-1">Member List</Link>
                 </div>
               </>
             )}

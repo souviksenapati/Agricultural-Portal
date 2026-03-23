@@ -1,12 +1,11 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useApplicants } from "../context/ApplicantContext";
+import { useApplicants } from "../../context/ApplicantContext";
 
 export default function MemberPage() {
-
-  const { applicants, loadFarmers } = useApplicants();
+  const { applicants, loadFarmers, updateApplicantStatus } = useApplicants();
 
   useEffect(() => {
-    loadFarmers(); // ✅ SAME API AS PENDING LIST
+    loadFarmers();
   }, []);
 
   const [search, setSearch] = useState({
@@ -35,119 +34,62 @@ export default function MemberPage() {
   }, [applicants, search]);
 
   const handleReset = () => {
-    setSearch({
-      name: "",
-      email: "",
-      mobile: "",
-      role: "",
-    });
+    setSearch({ name: "", email: "", mobile: "", role: "" });
+  };
+
+  const toggleStatus = async (id, currentStatus) => {
+    const newStatus = currentStatus === "approved" ? "inactive" : "approved";
+    await updateApplicantStatus(id, newStatus); // Update API
+    loadFarmers(); // Reload after update
   };
 
   return (
     <div className="bg-gray-100 min-h-screen">
-
-      {/* HEADER */}
-      <div className="bg-white shadow px-6 py-3 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <img
-            src="https://upload.wikimedia.org/wikipedia/commons/3/3e/Emblem_of_West_Bengal.svg"
-            className="w-10"
-          />
-          <div>
-            <h1 className="text-blue-700 font-semibold">
-              Government of West Bengal
-            </h1>
-            <p className="text-xs text-gray-600">
-              Department of Agriculture
-            </p>
-          </div>
-        </div>
-
-        <div className="text-sm">adabankura1@gmail.com</div>
-      </div>
-
-      {/* NAVBAR */}
-      <div className="bg-blue-700 text-white px-6 py-2 flex justify-between">
-        <div className="flex gap-6">
-          <span>Dashboard</span>
-          <span>MIS</span>
-          <span>Applicant List</span>
-          <span className="font-semibold">Members</span>
-        </div>
-        <div>Download App ⬇</div>
-      </div>
-
-      {/* CONTENT */}
       <div className="p-6 max-w-7xl mx-auto">
-
-        <h2 className="text-xl text-gray-700 mb-6">
-          SEARCH MEMBER
-        </h2>
+        <h2 className="text-xl text-gray-700 mb-6">SEARCH MEMBER</h2>
 
         {/* SEARCH */}
         <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
-
           <input
             placeholder="Search by name"
             value={search.name}
-            onChange={(e) =>
-              setSearch({ ...search, name: e.target.value })
-            }
+            onChange={(e) => setSearch({ ...search, name: e.target.value })}
             className="border px-3 py-2 rounded"
           />
-
           <input
             placeholder="Search by email"
             value={search.email}
-            onChange={(e) =>
-              setSearch({ ...search, email: e.target.value })
-            }
+            onChange={(e) => setSearch({ ...search, email: e.target.value })}
             className="border px-3 py-2 rounded"
           />
-
           <input
             placeholder="Search by mobile"
             value={search.mobile}
-            onChange={(e) =>
-              setSearch({ ...search, mobile: e.target.value })
-            }
+            onChange={(e) => setSearch({ ...search, mobile: e.target.value })}
             className="border px-3 py-2 rounded"
           />
-
           <select
             value={search.role}
-            onChange={(e) =>
-              setSearch({ ...search, role: e.target.value })
-            }
+            onChange={(e) => setSearch({ ...search, role: e.target.value })}
             className="border px-3 py-2 rounded"
           >
             <option value="">All Roles</option>
             <option>Gramdoot</option>
             <option>AUDIT GD</option>
           </select>
-
-          <button className="bg-blue-600 text-white px-4 py-2 rounded">
-            Search
-          </button>
-
+          <button className="bg-blue-600 text-white px-4 py-2 rounded">Search</button>
           <button
             onClick={handleReset}
             className="bg-cyan-500 text-white px-4 py-2 rounded"
           >
             Reset
           </button>
-
         </div>
 
         {/* TABLE */}
-        <h3 className="text-blue-600 font-semibold mb-2">
-          Member List
-        </h3>
-
+        <h3 className="text-blue-600 font-semibold mb-2">Member List</h3>
         <div className="overflow-x-auto border">
-
           <table className="w-full text-sm border">
-
             <thead className="bg-gray-200">
               <tr>
                 <th className="border px-3 py-2">#</th>
@@ -156,44 +98,41 @@ export default function MemberPage() {
                 <th className="border px-3 py-2">Phone Number</th>
                 <th className="border px-3 py-2">Role</th>
                 <th className="border px-3 py-2">Status</th>
+                <th className="border px-3 py-2">Action</th>
               </tr>
             </thead>
-
             <tbody>
               {filtered.map((m, i) => (
                 <tr key={m.id} className="text-center">
-
                   <td className="border px-3 py-2">{i + 1}</td>
                   <td className="border px-3 py-2">{m.name}</td>
-                  <td className="border px-3 py-2">
-                    {m.email || "-"}
-                  </td>
-                  <td className="border px-3 py-2">
-                    {m.mobile || "-"}
-                  </td>
-                  <td className="border px-3 py-2">
-                    {m.role || "Gramdoot"}
-                  </td>
-
+                  <td className="border px-3 py-2">{m.email || "-"}</td>
+                  <td className="border px-3 py-2">{m.mobile || "-"}</td>
+                  <td className="border px-3 py-2">{m.role || "Gramdoot"}</td>
                   <td className="border px-3 py-2">
                     {m.status === "approved" ? (
-                      <span className="text-green-600 font-semibold">
-                        Active
-                      </span>
+                      <span className="text-green-600 font-semibold">Active</span>
                     ) : (
-                      <span className="text-red-600 font-semibold">
-                        Inactive
-                      </span>
+                      <span className="text-red-600 font-semibold">Inactive</span>
                     )}
                   </td>
-
+                  <td className="border px-3 py-2 flex justify-center">
+                    {/* Toggle switch */}
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        className="sr-only peer"
+                        checked={m.status === "approved"}
+                        onChange={() => toggleStatus(m.id, m.status)}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:bg-green-600 peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border after:border-gray-300 after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                    </label>
+                  </td>
                 </tr>
               ))}
             </tbody>
-
           </table>
         </div>
-
       </div>
     </div>
   );
