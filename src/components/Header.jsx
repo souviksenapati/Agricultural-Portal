@@ -1017,6 +1017,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useApplicants } from '../context/ApplicantContext';
 
 const ROLE_HOME = {
   gramdoot: '/portal/dashboard',
@@ -1034,6 +1035,7 @@ const ROLE_LABELS = {
 
 export default function Header() {
   const { user } = useAuth();
+  const { applicants, loadFarmers } = useApplicants();
   const location = useLocation();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -1071,6 +1073,78 @@ export default function Header() {
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    if (user?.role === 'ada' && applicants.length === 0) {
+      loadFarmers();
+    }
+  }, [user?.role, applicants.length, loadFarmers]);
+
+  const csvEscape = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+
+  const downloadApplicantsCsv = (label, rows) => {
+    const header = [
+      'Sl No',
+      'Acknowledgement ID',
+      'Applicant Name',
+      'Aadhaar No',
+      'Mobile No',
+      'Status',
+      'Bank Name',
+      'Branch Name',
+      'Account Number',
+      'IFSC',
+    ];
+
+    const body = rows.map((app, index) => [
+      index + 1,
+      app.ackId,
+      app.name,
+      app.aadhaar,
+      app.mobile,
+      app.status,
+      app.bank_name || app.fullForm?.bankName || '',
+      app.branch_name || app.fullForm?.branchName || '',
+      app.account_number || app.fullForm?.accountNumber || '',
+      app.ifsc || app.fullForm?.ifscCode || '',
+    ]);
+
+    const csv = [header, ...body]
+      .map((row) => row.map(csvEscape).join(','))
+      .join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `${label.toLowerCase().replace(/\s+/g, '_')}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleMisDownload = (type) => {
+    const statusLists = {
+      submitted: applicants.filter((app) => app.status !== 'deleted'),
+      approved: applicants.filter((app) => app.status === 'approved'),
+      rejected: applicants.filter((app) => app.status === 'rejected'),
+      pending: applicants.filter((app) => app.status === 'pending'),
+      reverted: applicants.filter((app) => app.status === 'reverted'),
+      sent_to_bank: applicants.filter((app) => app.status === 'sent_to_bank'),
+    };
+
+    const labels = {
+      submitted: 'submitted_list',
+      approved: 'approved_list',
+      rejected: 'rejected_list',
+      pending: 'pending_list',
+      reverted: 'reverted_list',
+      sent_to_bank: 'send_to_bank_list',
+    };
+
+    downloadApplicantsCsv(labels[type], statusLists[type] || []);
+    setMisMenuOpen(false);
+    setIsMenuOpen(false);
+  };
 
   if (user) {
     return (
@@ -1192,12 +1266,12 @@ export default function Header() {
 
                   {misMenuOpen && (
                     <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg">
-                      <Link to="/portal/mis/demo1" className="block px-4 py-2">Download Submitted List</Link>
-                      <Link to="/portal/mis/demo2" className="block px-4 py-2">Download Approved List</Link>
-                      <Link to="/portal/mis/demo2" className="block px-4 py-2">Download Rejected List</Link>
-                      <Link to="/portal/mis/demo2" className="block px-4 py-2">Download Pending List</Link>
-                      <Link to="/portal/mis/demo2" className="block px-4 py-2">Download Reverted List</Link>
-                      <Link to="/portal/mis/demo2" className="block px-4 py-2">Download Send to Bank List</Link>
+                      <button type="button" onClick={() => handleMisDownload('submitted')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Submitted List</button>
+                      <button type="button" onClick={() => handleMisDownload('approved')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Approved List</button>
+                      <button type="button" onClick={() => handleMisDownload('rejected')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Rejected List</button>
+                      <button type="button" onClick={() => handleMisDownload('pending')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Pending List</button>
+                      <button type="button" onClick={() => handleMisDownload('reverted')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Reverted List</button>
+                      <button type="button" onClick={() => handleMisDownload('sent_to_bank')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Send to Bank List</button>
                     </div>
                   )}
                 </div>
@@ -1285,12 +1359,12 @@ export default function Header() {
 
                 <div>
                   <p className="font-semibold">MIS</p>
-                  <Link to="/portal/mis/demo1" className="block pl-3 py-1">Download Submitted List</Link>
-                  <Link to="/portal/mis/demo2" className="block pl-3 py-1">Download Approved List</Link>
-                  <Link to="/portal/mis/demo2" className="block pl-3 py-1">Download Rejected List</Link>
-                  <Link to="/portal/mis/demo2" className="block pl-3 py-1">Download Pending List</Link>
-                  <Link to="/portal/mis/demo2" className="block pl-3 py-1">Download Reverted List</Link>
-                  <Link to="/portal/mis/demo2" className="block pl-3 py-1">Download Send to Bank List</Link>
+                  <button type="button" onClick={() => handleMisDownload('submitted')} className="block pl-3 py-1 text-left">Download Submitted List</button>
+                  <button type="button" onClick={() => handleMisDownload('approved')} className="block pl-3 py-1 text-left">Download Approved List</button>
+                  <button type="button" onClick={() => handleMisDownload('rejected')} className="block pl-3 py-1 text-left">Download Rejected List</button>
+                  <button type="button" onClick={() => handleMisDownload('pending')} className="block pl-3 py-1 text-left">Download Pending List</button>
+                  <button type="button" onClick={() => handleMisDownload('reverted')} className="block pl-3 py-1 text-left">Download Reverted List</button>
+                  <button type="button" onClick={() => handleMisDownload('sent_to_bank')} className="block pl-3 py-1 text-left">Download Send to Bank List</button>
                 </div>
 
                 <div>

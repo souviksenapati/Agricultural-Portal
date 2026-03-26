@@ -309,7 +309,8 @@ import {
   normalizeFarmer,
   updateFarmerStatus,
   deleteFarmer,
-  createAgent
+  createAgent,
+  getDeletedFarmers
 } from '../api/client';
 
 const ApplicantContext = createContext();
@@ -325,6 +326,17 @@ function saveStatus(id, status) {
   sessionStorage.setItem("farmerStatusMap", JSON.stringify(map));
 }
 
+function saveDeletedApplicant(applicant) {
+  if (!applicant?.id) return;
+  const map = JSON.parse(sessionStorage.getItem("deletedFarmersMap") || "{}");
+  map[applicant.id] = {
+    ...applicant,
+    status: 'deleted',
+    is_deleted: true,
+  };
+  sessionStorage.setItem("deletedFarmersMap", JSON.stringify(map));
+}
+
 export function ApplicantProvider({ children }) {
   const [applicants, setApplicants] = useState([]);
 
@@ -335,8 +347,14 @@ export function ApplicantProvider({ children }) {
       const arr = Array.isArray(data) ? data : (data?.farmers || data?.data || []);
 
       const normalized = arr.map(normalizeFarmer);
+      const deletedApplicants = getDeletedFarmers();
+      const existingIds = new Set(normalized.map((app) => app.id));
+      const mergedApplicants = [
+        ...normalized,
+        ...deletedApplicants.filter((app) => !existingIds.has(app.id)),
+      ];
 
-      setApplicants(normalized);
+      setApplicants(mergedApplicants);
     } catch (e) {
       console.error('[Applicants] listFarmers error:', e.message);
     }
@@ -372,8 +390,8 @@ export function ApplicantProvider({ children }) {
   };
 
   // ✅ STATUS ACTION HANDLER (COMMON)
-  const updateStatus = async (id, status) => {
-    await updateFarmerStatus(id, status);
+  const updateStatus = async (id, status, remoteStatus = status) => {
+    await updateFarmerStatus(id, remoteStatus);
 
     saveStatus(id, status); // 🔥 Persist locally
 
@@ -387,20 +405,23 @@ export function ApplicantProvider({ children }) {
   const approveApplicant = (id) => updateStatus(id, 'approved');
   const rejectApplicant = (id) => updateStatus(id, 'rejected');
   const sendToBank = (id) => updateStatus(id, 'sent_to_bank');
-  const revertToADA = (id) => updateStatus(id, 'pending');
+  const revertToADA = (id) => updateStatus(id, 'reverted', 'pending');
   const markProcessed = (id) => updateStatus(id, 'processed');
 
   // ✅ FIXED DELETE
   const deleteApplicant = async (id) => {
+    const deletedApplicant = applicants.find((a) => a.id === id);
+
     await deleteFarmer(id);
 
-    // remove from UI
-    setApplicants(prev => prev.filter(a => a.id !== id));
+    saveStatus(id, 'deleted');
+    saveDeletedApplicant(deletedApplicant);
 
-    // remove from local storage
-    const map = JSON.parse(sessionStorage.getItem("farmerStatusMap") || "{}");
-    delete map[id];
-    sessionStorage.setItem("farmerStatusMap", JSON.stringify(map));
+    setApplicants(prev =>
+      prev.map(a =>
+        a.id === id ? { ...a, status: 'deleted', is_deleted: true } : a
+      )
+    );
   };
 
   // ✅ CREATE AGENT

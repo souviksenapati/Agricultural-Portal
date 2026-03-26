@@ -498,6 +498,18 @@ function getLocalStatus(id) {
   return getStatusMap()[id] || null;
 }
 
+function getDeletedFarmersMap() {
+  try {
+    return JSON.parse(sessionStorage.getItem('deletedFarmersMap') || '{}');
+  } catch {
+    return {};
+  }
+}
+
+export function getDeletedFarmers() {
+  return Object.values(getDeletedFarmersMap());
+}
+
 /** ─────────────────────────────────────────────
  * 🔄 STATUS MAPPING
  * ───────────────────────────────────────────── */
@@ -506,12 +518,20 @@ function serverStatusToLocal(s) {
   const normalized = String(s ?? '').toLowerCase();
 
   const map = {
+    '': 'pending',
+    quick_registration: 'pending',
     pending: 'pending',
+    submitted: 'pending',
     approved: 'approved',
     rejected: 'rejected',
+    reverted: 'reverted',
+    deleted: 'deleted',
     sent_to_bank: 'sent_to_bank',
     processed: 'processed',
   };
+
+  if (normalized === '1' || normalized === 'true') return 'approved';
+  if (normalized === '0' || normalized === 'false') return 'pending';
 
   return map[normalized] || null;
 }
@@ -527,15 +547,33 @@ export function normalizeFarmer(f) {
 
   const localStatus = getLocalStatus(f.id);
 
-  const status = apiStatus || localStatus || 'pending';
+  const status = localStatus || apiStatus || 'pending';
 
   return {
     id: f.id,
     ackId: f.acknowledgement_no || '',
+    acknowledgement_id: f.acknowledgement_no || '',
     name: f.farmer_profile?.name || f.name || '',
     aadhaar: f.aadhar_no || '',
     mobile: f.mobile_no || '',
     status,
+    gram_panchayat:
+      (f.farmer_address?.gram_panchayat_id ?? f.gram_panchayat_id) != null
+        ? String(f.farmer_address?.gram_panchayat_id ?? f.gram_panchayat_id)
+        : '',
+    bank_name: f.farmer_bank?.bank_name || f.bank_name || '',
+    branch_name: f.farmer_bank?.branch_name || f.branch_name || '',
+    account_number: f.farmer_bank?.account_number || f.account_number || '',
+    ifsc: f.farmer_bank?.ifsc_code || f.ifsc_code || '',
+    present_in_kbn: f.present_in_kbn ?? f.present_in_kb_n ?? false,
+    present_in_kb_n: f.present_in_kb_n ?? f.present_in_kbn ?? false,
+    applied_yuvasathi: f.applied_yuvasathi ?? f.applied_for_yuvasathi ?? false,
+    applied_for_yuvasathi: f.applied_for_yuvasathi ?? f.applied_yuvasathi ?? false,
+    remarks: f.remarks || '',
+    revert_remarks: f.revert_remarks || '',
+    is_rejected: f.is_rejected ?? status === 'rejected',
+    is_deleted: f.is_deleted ?? status === 'deleted',
+    is_reverted: f.is_reverted ?? status === 'reverted',
 
     farmerImageUrl:
       f.farmer_image_url ||
@@ -546,11 +584,15 @@ export function normalizeFarmer(f) {
       fathersName: f.farmer_profile?.father_name || '',
       gender: f.farmer_profile?.gender || '',
       dob: f.farmer_profile?.date_of_birth || '',
-      district: f.farmer_address?.district_id || '',
-      block: f.farmer_address?.block_id || '',
-      village: f.farmer_address?.village_id || '',
+      district: (f.farmer_address?.district_id ?? f.district_id ?? '')?.toString?.() || '',
+      block: (f.farmer_address?.block_id ?? f.block_id ?? '')?.toString?.() || '',
+      gramPanchayat:
+        (f.farmer_address?.gram_panchayat_id ?? f.gram_panchayat_id ?? '')?.toString?.() || '',
+      village: (f.farmer_address?.village_id ?? f.village_id ?? '')?.toString?.() || '',
       bankName: f.farmer_bank?.bank_name || '',
+      branchName: f.farmer_bank?.branch_name || '',
       accountNumber: f.farmer_bank?.account_number || '',
+      ifscCode: f.farmer_bank?.ifsc_code || '',
     },
   };
 }
@@ -565,6 +607,57 @@ export async function listFarmers() {
 
 export async function createFarmer(body) {
   return apiPostJSON('/farmers', { farmer: body }, { auth: true });
+}
+
+export async function updateFarmerMultipart(id, farmerBody, files = {}) {
+  const token = getToken();
+  const headers = {};
+
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const fd = new FormData();
+
+  function appendNested(obj, prefix) {
+    Object.entries(obj).forEach(([key, value]) => {
+      if (value === undefined || value === null) return;
+      const formKey = `${prefix}[${key}]`;
+
+      if (typeof value === 'object' && !(value instanceof File)) {
+        appendNested(value, formKey);
+      } else {
+        fd.append(formKey, value);
+      }
+    });
+  }
+
+  appendNested(farmerBody, 'farmer');
+
+  const fileFields = {
+    aadhaar_card_image: 'farmer[aadhaar_image]',
+    voter_card_image: 'farmer[voter_image]',
+    farmer_image: 'farmer[farmer_profile_attributes][farmer_image]',
+    bank_image: 'farmer[farmer_bank_attributes][bank_image]',
+    self_declaration: 'farmer[self_declaration]',
+  };
+
+  Object.entries(fileFields).forEach(([key, formKey]) => {
+    if (files[key] instanceof File) {
+      fd.append(formKey, files[key]);
+    }
+  });
+
+  const res = await fetch(`${BASE}/farmers/${id}`, {
+    method: 'POST',
+    headers,
+    body: fd,
+  });
+
+  const text = await res.text();
+  let data = {};
+  try { data = JSON.parse(text); } catch {}
+
+  if (!res.ok) throw new Error(extractError(data) || `HTTP ${res.status}`);
+  return data;
 }
 
 export async function updateFarmerStatus(id, status) {
