@@ -90,7 +90,7 @@ export default function SentToBankList() {
                                 </button>
                                 <button
                                     onClick={handleReset}
-                                    className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-1.5 rounded"
+                                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-medium px-5 py-1.5 rounded transition-colors"
                                 >
                                     Reset
                                 </button>

@@ -1175,7 +1175,7 @@ export default function Header() {
                       setMisMenuOpen(false);
                       setMemberMenuOpen(false);
                     }}
-                    className="flex gap-1 hover:cursor-pointer"
+                    className="flex gap-1"
                   >
                     Quick Registration
                     <svg
@@ -1265,7 +1265,7 @@ export default function Header() {
                   </button>
 
                   {misMenuOpen && (
-                    <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg z-50">
+                    <div className="absolute mt-2 w-56 bg-white border rounded shadow-lg z-50">
                       <button type="button" onClick={() => handleMisDownload('submitted')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Submitted List</button>
                       <button type="button" onClick={() => handleMisDownload('approved')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Approved List</button>
                       <button type="button" onClick={() => handleMisDownload('rejected')} className="block w-full text-left px-4 py-2 hover:bg-gray-50 hover:cursor-pointer">Download Rejected List</button>
@@ -1314,7 +1314,7 @@ export default function Header() {
 
             {/* Mobile Toggle */}
             <div className="sm:hidden">
-              <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="hover:cursor-pointer">
+              <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
                 {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
               </button>
             </div>
@@ -1359,12 +1359,12 @@ export default function Header() {
 
                 <div>
                   <p className="font-semibold">MIS</p>
-                  <button type="button" onClick={() => handleMisDownload('submitted')} className="block pl-3 py-1 text-left hover:cursor-pointer">Download Submitted List</button>
-                  <button type="button" onClick={() => handleMisDownload('approved')} className="block pl-3 py-1 text-left hover:cursor-pointer">Download Approved List</button>
-                  <button type="button" onClick={() => handleMisDownload('rejected')} className="block pl-3 py-1 text-left hover:cursor-pointer">Download Rejected List</button>
-                  <button type="button" onClick={() => handleMisDownload('pending')} className="block pl-3 py-1 text-left hover:cursor-pointer">Download Pending List</button>
-                  <button type="button" onClick={() => handleMisDownload('reverted')} className="block pl-3 py-1 text-left hover:cursor-pointer">Download Reverted List</button>
-                  <button type="button" onClick={() => handleMisDownload('sent_to_bank')} className="block pl-3 py-1 text-left hover:cursor-pointer">Download Send to Bank List</button>
+                  <button type="button" onClick={() => handleMisDownload('submitted')} className="block pl-3 py-1 text-left">Download Submitted List</button>
+                  <button type="button" onClick={() => handleMisDownload('approved')} className="block pl-3 py-1 text-left">Download Approved List</button>
+                  <button type="button" onClick={() => handleMisDownload('rejected')} className="block pl-3 py-1 text-left">Download Rejected List</button>
+                  <button type="button" onClick={() => handleMisDownload('pending')} className="block pl-3 py-1 text-left">Download Pending List</button>
+                  <button type="button" onClick={() => handleMisDownload('reverted')} className="block pl-3 py-1 text-left">Download Reverted List</button>
+                  <button type="button" onClick={() => handleMisDownload('sent_to_bank')} className="block pl-3 py-1 text-left">Download Send to Bank List</button>
                 </div>
 
                 <div>
@@ -1395,12 +1395,12 @@ export default function Header() {
 
           <div className="hidden sm:flex gap-2">
             <Link to="/status" className="bg-[#00ACED] text-white px-4 py-2 rounded">Check Application</Link>
-            <button className="bg-[#00ACED] text-white px-4 py-2 rounded hover:cursor-pointer">New Application Form</button>
-            <button className="bg-[#00ACED] text-white px-4 py-2 rounded hover:cursor-pointer">Faq</button>
+            <button className="bg-[#00ACED] text-white px-4 py-2 rounded">New Application Form</button>
+            <button className="bg-[#00ACED] text-white px-4 py-2 rounded">Faq</button>
           </div>
 
           <div className="sm:hidden">
-            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="hover:cursor-pointer">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)}>
               {isMenuOpen ? <X size={28} /> : <Menu size={28} />}
             </button>
           </div>
@@ -1409,8 +1409,8 @@ export default function Header() {
         {isMenuOpen && (
           <div className="sm:hidden px-4 pb-4 flex flex-col gap-2 bg-white border-t">
             <Link to="/status" className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">Check Application</Link>
-            <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded hover:cursor-pointer">New Application Form</button>
-            <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded hover:cursor-pointer">Faq</button>
+            <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">New Application Form</button>
+            <button className="bg-[#00ACED] text-center text-white px-4 py-2 rounded">Faq</button>
           </div>
         )}
       </header>

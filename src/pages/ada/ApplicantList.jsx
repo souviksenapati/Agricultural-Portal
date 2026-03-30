@@ -11,6 +11,7 @@ export default function ADAApplicantList() {
 
   const isPending = pathname.endsWith('/pending');
   const isApproved = pathname.endsWith('/approved');
+  const isApplicantList = !isPending && !isApproved;
 
   const {
     applicants,
@@ -240,8 +241,19 @@ export default function ADAApplicantList() {
                             >
                               <EyeIcon />
                             </ActionBtn>
+                            {/* 
+                            {isApplicantList && (
+                              <ActionBtn
+                                color="blue"
+                                title="Edit Application"
+                                onClick={() => navigate(`/portal/ada/registration/${row.id}/edit`)}
+                                disabled={isBusy}
+                              >
+                                <EditIcon />
+                              </ActionBtn>
+                            )} */}
 
-                            {!isApproved && (row.status === 'pending' || row.status === 'rejected') && (
+                            {!isApplicantList && !isApproved && (row.status === 'pending' || row.status === 'rejected') && (
                               <ActionBtn
                                 color="green"
                                 title="Approve"
@@ -252,7 +264,7 @@ export default function ADAApplicantList() {
                               </ActionBtn>
                             )}
 
-                            {!isApproved && row.status === 'pending' && (
+                            {!isApplicantList && !isApproved && row.status === 'pending' && (
                               <ActionBtn
                                 color="orange"
                                 title="Reject"
@@ -263,14 +275,16 @@ export default function ADAApplicantList() {
                               </ActionBtn>
                             )}
 
-                            <ActionBtn
-                              color="red"
-                              title="Delete"
-                              onClick={() => setConfirmDelete(row)}
-                              disabled={isBusy}
-                            >
-                              <TrashIcon />
-                            </ActionBtn>
+                            {!isApplicantList && (
+                              <ActionBtn
+                                color="red"
+                                title="Delete"
+                                onClick={() => setConfirmDelete(row)}
+                                disabled={isBusy}
+                              >
+                                <TrashIcon />
+                              </ActionBtn>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -348,6 +362,7 @@ function ActionBtn({ color = 'cyan', title, onClick, children, disabled = false 
     cyan: 'bg-[#3eb0c9] hover:bg-[#2a9ab0]',
     green: 'bg-green-600 hover:bg-green-700',
     orange: 'bg-orange-500 hover:bg-orange-600',
+    blue: 'bg-blue-600 hover:bg-blue-700',
     red: 'bg-red-600 hover:bg-red-700',
   };
 
@@ -368,6 +383,12 @@ const EyeIcon = () => (
   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  </svg>
+);
+
+const EditIcon = () => (
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
   </svg>
 );
 
