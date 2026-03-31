@@ -398,6 +398,56 @@ function getToken() {
   }
 }
 
+function getRefreshToken() {
+  try {
+    const stored = sessionStorage.getItem('portalUser');
+    return stored ? JSON.parse(stored)?.refresh_token : null;
+  } catch {
+    return null;
+  }
+}
+
+async function refreshAccessToken() {
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) return false;
+
+  try {
+    const res = await fetch(`${BASE}/v1/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: refreshToken })
+    });
+
+    if (!res.ok) return false;
+
+    const data = await res.json();
+    if (!data?.data?.access_token) return false;
+
+    // Update portalUser in sessionStorage
+    const stored = sessionStorage.getItem('portalUser');
+    if (stored) {
+      const user = JSON.parse(stored);
+      user.access_token = data.data.access_token;
+
+      // If the backend returns a new refresh token, we can also store it
+      if (data.data.refresh_token) {
+        user.refresh_token = data.data.refresh_token;
+      }
+
+      try {
+        const payload = JSON.parse(atob(user.access_token.split('.')[1]));
+        if (payload.exp) user.token_expires_at = payload.exp * 1000;
+      } catch (e) { }
+
+      sessionStorage.setItem('portalUser', JSON.stringify(user));
+    }
+
+    return data.data.access_token;
+  } catch (err) {
+    return false;
+  }
+}
+
 /** ─────────────────────────────────────────────
  * ❌ ERROR HANDLING
  * ───────────────────────────────────────────── */
@@ -423,13 +473,29 @@ function extractError(data, fallback = 'Request failed') {
  * ───────────────────────────────────────────── */
 
 export async function apiGet(path, { auth = false } = {}) {
-  const headers = {};
+  let headers = {};
+  let token = null;
+
   if (auth) {
-    const token = getToken();
+    token = getToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE}${path}`, { headers });
+  let res = await fetch(`${BASE}${path}`, { headers });
+
+  // Try refreshing token if 401 Unauthorized
+  if (res.status === 401 && auth) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      headers['Authorization'] = `Bearer ${newToken}`;
+      res = await fetch(`${BASE}${path}`, { headers });
+    } else {
+      // Refresh failed, clear session and let app gracefully redirect to login
+      sessionStorage.removeItem('portalUser');
+      window.location.href = '/';
+    }
+  }
+
   const text = await res.text();
 
   let data = {};
@@ -440,17 +506,35 @@ export async function apiGet(path, { auth = false } = {}) {
 }
 
 export async function apiPost(path, body, { auth = false } = {}) {
-  const headers = {};
+  let headers = {};
+  let token = null;
+
   if (auth) {
-    const token = getToken();
+    token = getToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE}${path}`, {
+  let res = await fetch(`${BASE}${path}`, {
     method: 'POST',
     headers,
     body,
   });
+
+  // Try refreshing token if 401 Unauthorized
+  if (res.status === 401 && auth) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      headers['Authorization'] = `Bearer ${newToken}`;
+      res = await fetch(`${BASE}${path}`, {
+        method: 'POST',
+        headers,
+        body,
+      });
+    } else {
+      sessionStorage.removeItem('portalUser');
+      window.location.href = '/';
+    }
+  }
 
   const text = await res.text();
   let data = {};
@@ -461,18 +545,74 @@ export async function apiPost(path, body, { auth = false } = {}) {
 }
 
 export async function apiPostJSON(path, body, { auth = false } = {}) {
-  const headers = { 'Content-Type': 'application/json' };
+  let headers = { 'Content-Type': 'application/json' };
+  let token = null;
 
   if (auth) {
-    const token = getToken();
+    token = getToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const res = await fetch(`${BASE}${path}`, {
+  let res = await fetch(`${BASE}${path}`, {
     method: 'POST',
     headers,
     body: JSON.stringify(body),
   });
+
+  // Try refreshing token if 401 Unauthorized
+  if (res.status === 401 && auth) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      headers['Authorization'] = `Bearer ${newToken}`;
+      res = await fetch(`${BASE}${path}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+      });
+    } else {
+      sessionStorage.removeItem('portalUser');
+      window.location.href = '/';
+    }
+  }
+
+  const text = await res.text();
+  let data = {};
+  try { data = JSON.parse(text); } catch { }
+
+  if (!res.ok) throw new Error(extractError(data));
+  return data;
+}
+
+export async function apiPatchJSON(path, body, { auth = false } = {}) {
+  let headers = { 'Content-Type': 'application/json' };
+  let token = null;
+
+  if (auth) {
+    token = getToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  let res = await fetch(`${BASE}${path}`, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  // Try refreshing token if 401 Unauthorized
+  if (res.status === 401 && auth) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      headers['Authorization'] = `Bearer ${newToken}`;
+      res = await fetch(`${BASE}${path}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify(body),
+      });
+    } else {
+      sessionStorage.removeItem('portalUser');
+      window.location.href = '/';
+    }
+  }
 
   const text = await res.text();
   let data = {};
@@ -602,11 +742,19 @@ export function normalizeFarmer(f) {
  * ───────────────────────────────────────────── */
 
 export async function listFarmers() {
-  return apiGet('/farmer_lists', { auth: true });
+  const data = await apiGet('/v1/farmers', { auth: true });
+  // Handle various api structures safely
+  return Array.isArray(data) ? data : (data?.data || data?.farmers || []);
+}
+
+export async function getFarmer(id) {
+  const data = await apiGet(`/v1/farmers/${id}`, { auth: true });
+  return data?.data || data?.farmer || data;
 }
 
 export async function createFarmer(body) {
-  return apiPostJSON('/farmers', { farmer: body }, { auth: true });
+  const data = await apiPostJSON('/v1/farmers', { farmer: body }, { auth: true });
+  return data?.data || data?.farmer || data;
 }
 
 export async function updateFarmerMultipart(id, farmerBody, files = {}) {
@@ -646,22 +794,22 @@ export async function updateFarmerMultipart(id, farmerBody, files = {}) {
     }
   });
 
-  const res = await fetch(`${BASE}/farmers/${id}`, {
-    method: 'POST',
+  const res = await fetch(`${BASE}/v1/farmers/${id}`, {
+    method: 'PATCH',
     headers,
     body: fd,
   });
 
   const text = await res.text();
   let data = {};
-  try { data = JSON.parse(text); } catch {}
+  try { data = JSON.parse(text); } catch { }
 
   if (!res.ok) throw new Error(extractError(data) || `HTTP ${res.status}`);
-  return data;
+  return data?.data || data?.farmer || data;
 }
 
 export async function updateFarmerStatus(id, status) {
-  return apiPostJSON(`/farmers/${id}`, {
+  return apiPatchJSON(`/v1/farmers/${id}`, {
     farmer: { approval_status: status },
   }, { auth: true });
 }

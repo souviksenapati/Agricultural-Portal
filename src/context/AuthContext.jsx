@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-const AUTH_API = '/oauth/token';   // NOTE: no /api prefix — root-level OAuth endpoint
-const PROFILE_API = '/api/agent_profiles';
+const AUTH_API = '/api/v1/login';
 
 /** Map API role_name → internal role key.
  *  Values come from profile.role_name — keep both legacy + current strings.
@@ -12,6 +11,7 @@ const ROLE_MAP = {
   'Asstt. da (block)': 'ada',          // current API value for ADA role
   'SNO': 'sno',
   'Bank': 'bank',
+  'Admin': 'admin',
 };
 
 /** Fallback resolver when role_name isn't in ROLE_MAP exactly */
@@ -21,6 +21,7 @@ function resolveRole(role_name) {
   if (exact) return exact;
   // Partial / case-insensitive fallback
   const lower = role_name.toLowerCase();
+  if (lower.includes('admin')) return 'admin';
   if (lower.includes('gramdoot')) return 'gramdoot';
   if (lower.includes('ada') || lower.includes('asstt')) return 'ada';
   if (lower.includes('sno')) return 'sno';
@@ -58,36 +59,52 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     if (!user?.token_expires_at) return;
     const msLeft = user.token_expires_at - Date.now();
-    if (msLeft <= 0) { logout(); return; }
+
+    // If we have a refresh token, let the api client handle the 401
+    // We only force logout if there's no refresh token OR if it's been a very long time
+    if (msLeft <= 0) {
+      if (!user.refresh_token) {
+        logout();
+      }
+      return;
+    }
+
     const timer = setTimeout(() => {
-      console.warn('[AUTH] Token expired — logging out.');
-      logout();
+      if (!user.refresh_token) {
+        console.warn('[AUTH] Token expired — logging out.');
+        logout();
+      }
     }, msLeft);
+
     return () => clearTimeout(timer);
   }, [user]);
 
   /**
-   * Authenticates against the real OAuth API, then fetches the agent profile
-   * to get role, name, and working zone.
+   * Authenticates against the new /api/v1/login API and handles response
    */
   const login = async (email, password) => {
-    const body = new FormData();
-    body.append('username', email.trim());
-    body.append('password', password);
-    body.append('otp', '1234');
-    body.append('grant_type', 'password');
+    const body = JSON.stringify({
+      auth: {
+        email: email.trim(),
+        password: password
+      }
+    });
 
-    let tokenData;
+    let resultData;
     try {
-      const res = await fetch(AUTH_API, { method: 'POST', body });
-      tokenData = await res.json();
+      const res = await fetch(AUTH_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body
+      });
+      resultData = await res.json();
 
       console.log('[LOGIN] Status:', res.status, res.statusText);
-      console.log('[LOGIN] Response:', tokenData);
+      console.log('[LOGIN] Response:', resultData);
 
-      if (!res.ok) {
-        // API returns error objects like { error: '...', error_description: '...' }
-        const msg = tokenData?.error_description || tokenData?.error || 'Login failed.';
+      if (!res.ok || !resultData.data?.access_token) {
+        // API returns error objects
+        const msg = resultData?.message || resultData?.error || resultData?.data?.message || 'Login failed.';
         console.warn('[LOGIN] Failed:', msg);
         return { success: false, message: msg };
       }
@@ -96,41 +113,30 @@ export function AuthProvider({ children }) {
       return { success: false, message: 'Network error. Please try again.' };
     }
 
-    const { access_token, token_type, expires_in, created_at } = tokenData;
+    const { access_token, refresh_token, user: userData } = resultData.data;
 
-    // Compute absolute expiry timestamp in ms
-    const token_expires_at = (created_at + expires_in) * 1000;
-
-    // ── Fetch real profile: role, name, working zone ──────────────────────────
-    let role = 'gramdoot';
-    let name = email.trim();
-    let id = null;
-    let working_zone = null;
+    let token_expires_at = null;
     try {
-      const profileRes = await fetch(PROFILE_API, {
-        headers: { 'Authorization': `Bearer ${access_token}` },
-      });
-      const profile = await profileRes.json();
-      console.log('[LOGIN] Profile:', profile);
-      role = resolveRole(profile.role_name);
-      name = profile.name?.trim() || email.trim();
-      id = profile.id ?? null;  // needed as user_id when creating farmers
-      // API returns 'working_zones' (plural array) for Gramdoot, 'working_zone' (singular) for others
-      // Always take the first zone entry; fall back to singular field for backwards compat
-      working_zone = (profile.working_zones ?? [])[0] ?? profile.working_zone ?? null;
+      const payload = JSON.parse(atob(access_token.split('.')[1]));
+      if (payload.exp) token_expires_at = payload.exp * 1000;
     } catch (e) {
-      console.warn('[LOGIN] Profile fetch failed, using defaults:', e);
+      console.warn("Failed to parse token expiration", e);
     }
 
+    const role = resolveRole(userData.role_name);
+    const name = userData.name?.trim() || email.trim();
+    const id = userData.id ?? null;
+    const working_zone = (userData.working_zones ?? [])[0] ?? userData.working_zone ?? null;
+
     const sessionUser = {
-      id,               // server user PK — required when creating farmers (user_id field)
-      email: email.trim(),
+      id,
+      email: userData.email?.trim() || email.trim(),
       name,
       role,
-      working_zone,     // { id, district_id, block_id } — used to pre-fill forms
+      working_zone,
       access_token,
-      token_type,
-      expires_in,
+      refresh_token,
+      token_type: 'Bearer',
       token_expires_at,
     };
 
@@ -139,7 +145,23 @@ export function AuthProvider({ children }) {
     return { success: true, user: sessionUser };
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const token = user?.access_token || JSON.parse(sessionStorage.getItem('portalUser') || '{}')?.access_token;
+
+    if (token) {
+      try {
+        await fetch('/api/v1/logout', {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      } catch (err) {
+        console.warn('[AUTH] Logout API failed:', err);
+      }
+    }
+
     sessionStorage.removeItem('portalUser');
     setUser(null);
   };

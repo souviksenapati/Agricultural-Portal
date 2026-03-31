@@ -300,7 +300,7 @@ const FarmerSearch = () => {
                 throw new Error("User not logged in. Token missing.");
             }
 
-            const res = await fetch(`/api/farmer_lists?query=${encodeURIComponent(q)}`, {
+            const res = await fetch(`/api/v1/farmers?query=${encodeURIComponent(q)}`, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },

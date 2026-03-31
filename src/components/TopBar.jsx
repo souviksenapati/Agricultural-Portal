@@ -59,43 +59,64 @@ export default function TopBar() {
   return (
     <>
       <div className="w-full bg-[#f8f8f8] py-1 border-b border-gray-200 relative z-60">
-        <div className="w-full max-w-[1280px] mx-auto flex justify-end px-4">
+        <div className="w-full max-w-[1280px] mx-auto flex justify-end px-4 py-1">
           {user ? (
             /* ── Logged-in: user email + logout dropdown ── */
             <div className="relative" ref={menuRef}>
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-1.5 text-sm text-gray-700 hover:text-gray-900 bg-white border border-gray-300 rounded px-3 py-1 shadow-sm"
+                className="flex items-center gap-2.5 text-sm font-medium text-slate-700 bg-white/80 backdrop-blur-md border border-slate-200/60 rounded-full pl-2 pr-4 py-1.5 shadow-sm hover:shadow-md hover:bg-slate-50 hover:border-slate-300 transition-all duration-300 group cursor-pointer"
               >
-                <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                </svg>
-                {user.email}
-                <svg className="w-3.5 h-3.5 ml-0.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <div className="w-7 h-7 rounded-full bg-linear-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white shadow-inner group-hover:scale-105 transition-transform duration-300">
+                  <span className="text-xs font-bold">{user.email.charAt(0).toUpperCase()}</span>
+                </div>
+                <span className="truncate max-w-[160px]">{user.email}</span>
+                <svg
+                  className={`w-4 h-4 text-slate-400 transition-transform duration-300 ${userMenuOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  viewBox="0 0 24 24"
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                 </svg>
               </button>
-              {userMenuOpen && (
-                <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded shadow-lg z-50">
-                  <div className="px-4 py-2 text-xs text-gray-500 border-b border-gray-100">
-                    Logged in as <strong>{ROLE_LABELS[user.role]}</strong>
-                  </div>
+
+              {/* Attractive Dropdown Menu */}
+              <div
+                className={`absolute right-0 mt-3 w-64 bg-white/95 backdrop-blur-xl border border-slate-200 rounded-2xl shadow-[0_15px_40px_-10px_rgba(0,0,0,0.2)] z-100 transform transition-all duration-300 origin-top-right overflow-hidden ${userMenuOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 -translate-y-2 pointer-events-none'}`}
+              >
+                <div className="px-5 py-4 bg-linear-to-br from-indigo-50/50 to-purple-50/50 border-b border-indigo-100/50 relative overflow-hidden">
+                  <div className="absolute -right-4 -top-4 w-16 h-16 bg-purple-500/10 rounded-full blur-xl"></div>
+                  <p className="text-[11px] text-indigo-500/80 uppercase tracking-widest font-bold mb-1">Signed in as</p>
+                  <p className="text-sm font-extrabold text-slate-800 truncate">{ROLE_LABELS[user.role] || user.role}</p>
+                  <p className="text-xs font-medium text-slate-500 truncate mt-0.5">{user.email}</p>
+                </div>
+
+                <div className="p-2">
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-semibold text-rose-600 rounded-xl hover:bg-rose-50 hover:text-rose-700 transition-all duration-200 group cursor-pointer"
                   >
-                    Logout
+                    <div className="bg-rose-100/80 text-rose-500 p-1.5 rounded-lg group-hover:bg-rose-200 group-hover:text-rose-600 group-hover:scale-110 transition-all shadow-sm">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                    </div>
+                    Sign out securely
                   </button>
                 </div>
-              )}
+              </div>
             </div>
           ) : (
             /* ── Not logged-in: Login button ── */
             <button
               onClick={() => setIsLoginModalOpen(true)}
-              className="bg-white border border-[#00ace6] text-gray-600 hover:bg-[#00ace6] hover:text-white text-sm font-medium flex items-center gap-2 px-6 py-1 rounded-sm transition shadow-sm cursor-pointer"
+              className="relative inline-flex items-center justify-center gap-2 px-6 py-2 text-sm font-bold text-white transition-all duration-300 bg-linear-to-r from-blue-600 to-indigo-600 border border-transparent rounded-full shadow-md hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5 overflow-hidden group cursor-pointer"
             >
-              <i className="fa fa-lock text-xs"></i> Login
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-in-out"></div>
+              <i className="fa fa-lock text-white/90 group-hover:scale-110 transition-transform relative z-10 w-3"></i>
+              <span className="relative z-10 tracking-wide">Access Portal</span>
             </button>
           )}
         </div>

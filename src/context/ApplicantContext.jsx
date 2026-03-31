@@ -380,6 +380,7 @@ export function ApplicantProvider({ children }) {
     const normalized = normalizeFarmer(result);
 
     setApplicants(prev => [normalized, ...prev]);
+    return normalized;
   };
 
   // ✅ UPDATE LOCAL STATE
