@@ -17,6 +17,7 @@ export default function ADAApplicantList() {
     applicants,
     approveApplicant,
     rejectApplicant,
+    revertToADA,
     deleteApplicant,
     loadFarmers,
     loadADAPendings,
@@ -271,6 +272,17 @@ export default function ADAApplicantList() {
                               </ActionBtn>
                             )}
 
+                            {isApproved && (
+                              <ActionBtn
+                                color="blue"
+                                title="Revert"
+                                onClick={() => runAction(row.id, () => revertToADA(row.id), 'Revert failed')}
+                                disabled={isBusy}
+                              >
+                                <RevertIcon />
+                              </ActionBtn>
+                            )}
+
                             {!isApplicantList && !isApproved && row.status === 'pending' && (
                               <ActionBtn
                                 color="orange"
@@ -408,6 +420,12 @@ const CheckIcon = () => (
 const XIcon = () => (
   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+);
+
+const RevertIcon = () => (
+  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 14 4 9m0 0 5-5M4 9h10a6 6 0 1 1 0 12h-1" />
   </svg>
 );
 

@@ -4,8 +4,12 @@ import {
   listFarmers,
   listADAPendings,
   listADAApproved,
+  listADARejected,
+  listADAReverted,
   normalizeFarmer,
   approveADAPending,
+  rejectADAPending,
+  revertADAPending,
   updateFarmerStatus,
   deleteFarmer,
   createAgent,
@@ -147,6 +151,74 @@ export function ApplicantProvider({ children }) {
     }
   }, []);
 
+  const loadADARejected = useCallback(async () => {
+    setLoadingFarmers(true);
+    setFarmersError('');
+
+    try {
+      const arr = await listADARejected();
+      const normalized = arr.map(normalizeFarmer);
+      const deletedApplicants = getDeletedFarmers();
+      const existingIds = new Set(normalized.map((app) => app.id));
+      const mergedApplicants = [
+        ...normalized,
+        ...deletedApplicants.filter((app) => !existingIds.has(app.id)),
+      ];
+
+      setApplicants(mergedApplicants);
+      setFarmersMeta({
+        serverCount: normalized.length,
+        mergedCount: mergedApplicants.length,
+        loadedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error('[Applicants] listADARejected error:', e.message);
+      setApplicants([]);
+      setFarmersError(e.message || 'Failed to load ADA rejected list');
+      setFarmersMeta({
+        serverCount: 0,
+        mergedCount: 0,
+        loadedAt: null,
+      });
+    } finally {
+      setLoadingFarmers(false);
+    }
+  }, []);
+
+  const loadADAReverted = useCallback(async () => {
+    setLoadingFarmers(true);
+    setFarmersError('');
+
+    try {
+      const arr = await listADAReverted();
+      const normalized = arr.map(normalizeFarmer);
+      const deletedApplicants = getDeletedFarmers();
+      const existingIds = new Set(normalized.map((app) => app.id));
+      const mergedApplicants = [
+        ...normalized,
+        ...deletedApplicants.filter((app) => !existingIds.has(app.id)),
+      ];
+
+      setApplicants(mergedApplicants);
+      setFarmersMeta({
+        serverCount: normalized.length,
+        mergedCount: mergedApplicants.length,
+        loadedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error('[Applicants] listADAReverted error:', e.message);
+      setApplicants([]);
+      setFarmersError(e.message || 'Failed to load ADA reverted list');
+      setFarmersMeta({
+        serverCount: 0,
+        mergedCount: 0,
+        loadedAt: null,
+      });
+    } finally {
+      setLoadingFarmers(false);
+    }
+  }, []);
+
   const addApplicant = async ({ name, aadhaar, mobile }, user) => {
     if (!user?.id) throw new Error('User not loaded');
 
@@ -192,9 +264,23 @@ export function ApplicantProvider({ children }) {
       prev.map((a) => (a.id === id ? { ...a, status: 'approved' } : a))
     );
   };
-  const rejectApplicant = (id) => updateStatus(id, 'rejected');
+  const rejectApplicant = async (id) => {
+    await rejectADAPending(id);
+    saveStatus(id, 'rejected');
+
+    setApplicants((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, status: 'rejected', is_rejected: true } : a))
+    );
+  };
   const sendToBank = (id) => updateStatus(id, 'sent_to_bank');
-  const revertToADA = (id) => updateStatus(id, 'reverted', 'pending');
+  const revertToADA = async (id) => {
+    await revertADAPending(id);
+    saveStatus(id, 'reverted');
+
+    setApplicants((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, status: 'reverted', is_reverted: true } : a))
+    );
+  };
   const markProcessed = (id) => updateStatus(id, 'processed');
 
   const deleteApplicant = async (id) => {
@@ -224,6 +310,8 @@ export function ApplicantProvider({ children }) {
         loadFarmers,
         loadADAPendings,
         loadADAApproved,
+        loadADARejected,
+        loadADAReverted,
         addApplicant,
         updateApplicant,
         approveApplicant,

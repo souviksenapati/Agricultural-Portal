@@ -5,7 +5,7 @@ import { useDataDirs } from '../../context/DataDirsContext';
 
 export default function ADARevertedApplicantList() {
   const navigate = useNavigate();
-  const { applicants, loadFarmers } = useApplicants();
+  const { applicants, loadADAReverted } = useApplicants();
   const { gramPanchayats } = useDataDirs();
 
   const [filters, setFilters] = useState({
@@ -17,8 +17,8 @@ export default function ADARevertedApplicantList() {
   });
 
   useEffect(() => {
-    loadFarmers();
-  }, [loadFarmers]);
+    loadADAReverted();
+  }, [loadADAReverted]);
 
   const revertedApplicants = useMemo(() => {
     return applicants
@@ -93,7 +93,7 @@ export default function ADARevertedApplicantList() {
           </p>
           <button
             type="button"
-            onClick={loadFarmers}
+            onClick={loadADAReverted}
             className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-xs font-medium px-4 py-1.5 rounded transition-colors"
           >
             Refresh

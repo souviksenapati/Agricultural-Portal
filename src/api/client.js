@@ -493,6 +493,32 @@ export async function listADAApproved() {
   ]);
 }
 
+export async function listADARejected() {
+  const data = await apiGet('/v1/ada_pendings/rejected', { auth: true });
+  return extractCollection(data, [
+    'ada_pendings',
+    'rejected_lists',
+    'rejected_list',
+    'farmers',
+    'farmer_lists',
+    'items',
+    'records',
+  ]);
+}
+
+export async function listADAReverted() {
+  const data = await apiGet('/v1/ada_pendings/reverted', { auth: true });
+  return extractCollection(data, [
+    'ada_pendings',
+    'reverted_lists',
+    'reverted_list',
+    'farmers',
+    'farmer_lists',
+    'items',
+    'records',
+  ]);
+}
+
 export async function getFarmer(id) {
   const data = await apiGet(`/v1/farmers/${id}`, { auth: true });
   return data?.data || data?.farmer || data;
@@ -562,6 +588,14 @@ export async function updateFarmerStatus(id, status) {
 
 export async function approveADAPending(id) {
   return apiPatch(`/v1/ada_pendings/${id}/approve`, { auth: true });
+}
+
+export async function rejectADAPending(id) {
+  return apiPatch(`/v1/ada_pendings/${id}/reject`, { auth: true });
+}
+
+export async function revertADAPending(id) {
+  return apiPatch(`/v1/ada_pendings/${id}/revert`, { auth: true });
 }
 
 export async function deleteFarmer(id) {
