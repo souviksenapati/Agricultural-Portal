@@ -2,7 +2,10 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import {
   createFarmer,
   listFarmers,
+  listADAPendings,
+  listADAApproved,
   normalizeFarmer,
+  approveADAPending,
   updateFarmerStatus,
   deleteFarmer,
   createAgent,
@@ -76,6 +79,74 @@ export function ApplicantProvider({ children }) {
     }
   }, []);
 
+  const loadADAPendings = useCallback(async () => {
+    setLoadingFarmers(true);
+    setFarmersError('');
+
+    try {
+      const arr = await listADAPendings();
+      const normalized = arr.map(normalizeFarmer);
+      const deletedApplicants = getDeletedFarmers();
+      const existingIds = new Set(normalized.map((app) => app.id));
+      const mergedApplicants = [
+        ...normalized,
+        ...deletedApplicants.filter((app) => !existingIds.has(app.id)),
+      ];
+
+      setApplicants(mergedApplicants);
+      setFarmersMeta({
+        serverCount: normalized.length,
+        mergedCount: mergedApplicants.length,
+        loadedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error('[Applicants] listADAPendings error:', e.message);
+      setApplicants([]);
+      setFarmersError(e.message || 'Failed to load ADA pending list');
+      setFarmersMeta({
+        serverCount: 0,
+        mergedCount: 0,
+        loadedAt: null,
+      });
+    } finally {
+      setLoadingFarmers(false);
+    }
+  }, []);
+
+  const loadADAApproved = useCallback(async () => {
+    setLoadingFarmers(true);
+    setFarmersError('');
+
+    try {
+      const arr = await listADAApproved();
+      const normalized = arr.map(normalizeFarmer);
+      const deletedApplicants = getDeletedFarmers();
+      const existingIds = new Set(normalized.map((app) => app.id));
+      const mergedApplicants = [
+        ...normalized,
+        ...deletedApplicants.filter((app) => !existingIds.has(app.id)),
+      ];
+
+      setApplicants(mergedApplicants);
+      setFarmersMeta({
+        serverCount: normalized.length,
+        mergedCount: mergedApplicants.length,
+        loadedAt: new Date().toISOString(),
+      });
+    } catch (e) {
+      console.error('[Applicants] listADAApproved error:', e.message);
+      setApplicants([]);
+      setFarmersError(e.message || 'Failed to load ADA approved list');
+      setFarmersMeta({
+        serverCount: 0,
+        mergedCount: 0,
+        loadedAt: null,
+      });
+    } finally {
+      setLoadingFarmers(false);
+    }
+  }, []);
+
   const addApplicant = async ({ name, aadhaar, mobile }, user) => {
     if (!user?.id) throw new Error('User not loaded');
 
@@ -113,7 +184,14 @@ export function ApplicantProvider({ children }) {
     );
   };
 
-  const approveApplicant = (id) => updateStatus(id, 'approved');
+  const approveApplicant = async (id) => {
+    await approveADAPending(id);
+    saveStatus(id, 'approved');
+
+    setApplicants((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, status: 'approved' } : a))
+    );
+  };
   const rejectApplicant = (id) => updateStatus(id, 'rejected');
   const sendToBank = (id) => updateStatus(id, 'sent_to_bank');
   const revertToADA = (id) => updateStatus(id, 'reverted', 'pending');
@@ -144,6 +222,8 @@ export function ApplicantProvider({ children }) {
         farmersError,
         farmersMeta,
         loadFarmers,
+        loadADAPendings,
+        loadADAApproved,
         addApplicant,
         updateApplicant,
         approveApplicant,

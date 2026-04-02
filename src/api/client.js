@@ -323,6 +323,19 @@ export async function apiPatchJSON(path, body, { auth = false } = {}) {
   return data;
 }
 
+export async function apiPatch(path, { auth = false } = {}) {
+  const res = await fetchWithAuthRetry(path, {
+    method: 'PATCH',
+  }, auth);
+
+  const text = await res.text();
+  let data = {};
+  try { data = JSON.parse(text); } catch {}
+
+  if (!res.ok) throw new Error(extractError(data));
+  return data;
+}
+
 function extractCollection(data, keys = []) {
   if (Array.isArray(data)) return data;
 
@@ -337,6 +350,19 @@ function extractCollection(data, keys = []) {
   }
 
   return [];
+}
+
+function unwrapFarmerRecord(record) {
+  if (!record || typeof record !== 'object') return record;
+
+  return (
+    record.farmer ||
+    record.farmer_detail ||
+    record.farmer_details ||
+    record.application ||
+    record.applicant ||
+    record
+  );
 }
 
 function getStatusMap() {
@@ -386,51 +412,52 @@ function serverStatusToLocal(s) {
 }
 
 export function normalizeFarmer(f) {
+  const source = unwrapFarmerRecord(f) || {};
   const apiStatus = serverStatusToLocal(
-    f.approval_status ?? f.status ?? f.state
+    source.approval_status ?? source.status ?? source.state
   );
 
-  const localStatus = getLocalStatus(f.id);
+  const localStatus = getLocalStatus(source.id);
   const status = localStatus || apiStatus || 'pending';
 
   return {
-    id: f.id,
-    ackId: f.acknowledgement_no || '',
-    acknowledgement_id: f.acknowledgement_no || '',
-    name: f.farmer_profile?.name || f.name || '',
-    aadhaar: f.aadhar_no || '',
-    mobile: f.mobile_no || '',
+    id: source.id,
+    ackId: source.acknowledgement_no || source.acknowledgement_id || source.ack_id || '',
+    acknowledgement_id: source.acknowledgement_no || source.acknowledgement_id || source.ack_id || '',
+    name: source.farmer_profile?.name || source.name || '',
+    aadhaar: source.aadhar_no || source.aadhaar_no || '',
+    mobile: source.mobile_no || source.mobile || '',
     status,
     gram_panchayat:
-      (f.farmer_address?.gram_panchayat_id ?? f.gram_panchayat_id) != null
-        ? String(f.farmer_address?.gram_panchayat_id ?? f.gram_panchayat_id)
+      (source.farmer_address?.gram_panchayat_id ?? source.gram_panchayat_id) != null
+        ? String(source.farmer_address?.gram_panchayat_id ?? source.gram_panchayat_id)
         : '',
-    bank_name: f.farmer_bank?.bank_name || f.bank_name || '',
-    branch_name: f.farmer_bank?.branch_name || f.branch_name || '',
-    account_number: f.farmer_bank?.account_number || f.account_number || '',
-    ifsc: f.farmer_bank?.ifsc_code || f.ifsc_code || '',
-    present_in_kbn: f.present_in_kbn ?? f.present_in_kb_n ?? false,
-    present_in_kb_n: f.present_in_kb_n ?? f.present_in_kbn ?? false,
-    applied_yuvasathi: f.applied_yuvasathi ?? f.applied_for_yuvasathi ?? false,
-    applied_for_yuvasathi: f.applied_for_yuvasathi ?? f.applied_yuvasathi ?? false,
-    remarks: f.remarks || '',
-    revert_remarks: f.revert_remarks || '',
-    is_rejected: f.is_rejected ?? status === 'rejected',
-    is_deleted: f.is_deleted ?? status === 'deleted',
-    is_reverted: f.is_reverted ?? status === 'reverted',
-    farmerImageUrl: f.farmer_image_url || f.farmer_profile?.farmer_image_url || '',
+    bank_name: source.farmer_bank?.bank_name || source.bank_name || '',
+    branch_name: source.farmer_bank?.branch_name || source.branch_name || '',
+    account_number: source.farmer_bank?.account_number || source.account_number || '',
+    ifsc: source.farmer_bank?.ifsc_code || source.ifsc_code || '',
+    present_in_kbn: source.present_in_kbn ?? source.present_in_kb_n ?? false,
+    present_in_kb_n: source.present_in_kb_n ?? source.present_in_kbn ?? false,
+    applied_yuvasathi: source.applied_yuvasathi ?? source.applied_for_yuvasathi ?? false,
+    applied_for_yuvasathi: source.applied_for_yuvasathi ?? source.applied_yuvasathi ?? false,
+    remarks: source.remarks || '',
+    revert_remarks: source.revert_remarks || '',
+    is_rejected: source.is_rejected ?? status === 'rejected',
+    is_deleted: source.is_deleted ?? status === 'deleted',
+    is_reverted: source.is_reverted ?? status === 'reverted',
+    farmerImageUrl: source.farmer_image_url || source.farmer_profile?.farmer_image_url || '',
     fullForm: {
-      fathersName: f.farmer_profile?.father_name || '',
-      gender: f.farmer_profile?.gender || '',
-      dob: f.farmer_profile?.date_of_birth || '',
-      district: (f.farmer_address?.district_id ?? f.district_id ?? '')?.toString?.() || '',
-      block: (f.farmer_address?.block_id ?? f.block_id ?? '')?.toString?.() || '',
-      gramPanchayat: (f.farmer_address?.gram_panchayat_id ?? f.gram_panchayat_id ?? '')?.toString?.() || '',
-      village: (f.farmer_address?.village_id ?? f.village_id ?? '')?.toString?.() || '',
-      bankName: f.farmer_bank?.bank_name || '',
-      branchName: f.farmer_bank?.branch_name || '',
-      accountNumber: f.farmer_bank?.account_number || '',
-      ifscCode: f.farmer_bank?.ifsc_code || '',
+      fathersName: source.farmer_profile?.father_name || '',
+      gender: source.farmer_profile?.gender || '',
+      dob: source.farmer_profile?.date_of_birth || '',
+      district: (source.farmer_address?.district_id ?? source.district_id ?? '')?.toString?.() || '',
+      block: (source.farmer_address?.block_id ?? source.block_id ?? '')?.toString?.() || '',
+      gramPanchayat: (source.farmer_address?.gram_panchayat_id ?? source.gram_panchayat_id ?? '')?.toString?.() || '',
+      village: (source.farmer_address?.village_id ?? source.village_id ?? '')?.toString?.() || '',
+      bankName: source.farmer_bank?.bank_name || '',
+      branchName: source.farmer_bank?.branch_name || '',
+      accountNumber: source.farmer_bank?.account_number || '',
+      ifscCode: source.farmer_bank?.ifsc_code || '',
     },
   };
 }
@@ -438,6 +465,32 @@ export function normalizeFarmer(f) {
 export async function listFarmers() {
   const data = await apiGet('/v1/farmers', { auth: true });
   return extractCollection(data, ['farmer_lists', 'farmers', 'items', 'records']);
+}
+
+export async function listADAPendings() {
+  const data = await apiGet('/v1/ada_pendings', { auth: true });
+  return extractCollection(data, [
+    'ada_pendings',
+    'pending_lists',
+    'pending_list',
+    'farmers',
+    'farmer_lists',
+    'items',
+    'records',
+  ]);
+}
+
+export async function listADAApproved() {
+  const data = await apiGet('/v1/ada_pendings/approved', { auth: true });
+  return extractCollection(data, [
+    'ada_pendings',
+    'approved_lists',
+    'approved_list',
+    'farmers',
+    'farmer_lists',
+    'items',
+    'records',
+  ]);
 }
 
 export async function getFarmer(id) {
@@ -505,6 +558,10 @@ export async function updateFarmerStatus(id, status) {
   return apiPatchJSON(`/v1/farmers/${id}`, {
     farmer: { approval_status: status },
   }, { auth: true });
+}
+
+export async function approveADAPending(id) {
+  return apiPatch(`/v1/ada_pendings/${id}/approve`, { auth: true });
 }
 
 export async function deleteFarmer(id) {

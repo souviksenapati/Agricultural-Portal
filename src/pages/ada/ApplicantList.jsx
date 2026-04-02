@@ -19,6 +19,8 @@ export default function ADAApplicantList() {
     rejectApplicant,
     deleteApplicant,
     loadFarmers,
+    loadADAPendings,
+    loadADAApproved,
   } = useApplicants();
   const { districtName, blockName } = useDataDirs();
 
@@ -30,10 +32,15 @@ export default function ADAApplicantList() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [actionError, setActionError] = useState('');
   const [actingId, setActingId] = useState(null);
+  const loadList = isPending
+    ? loadADAPendings
+    : isApproved
+      ? loadADAApproved
+      : loadFarmers;
 
   useEffect(() => {
-    loadFarmers();
-  }, [loadFarmers]);
+    loadList();
+  }, [loadList]);
 
   const list = useMemo(() => {
     let arr = applicants;
@@ -148,7 +155,7 @@ export default function ADAApplicantList() {
             </div>
           </div>
 
-          {actionError && (
+              {actionError && (
             <div className="mb-3 flex items-center gap-2 bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2 rounded">
               <span className="flex-1">{actionError}</span>
               <button
@@ -167,7 +174,7 @@ export default function ADAApplicantList() {
             </p>
             <button
               type="button"
-              onClick={loadFarmers}
+              onClick={loadList}
               className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-xs font-medium px-4 py-1.5 rounded transition-colors"
             >
               Refresh
