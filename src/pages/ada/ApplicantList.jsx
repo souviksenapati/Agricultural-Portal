@@ -23,6 +23,7 @@ export default function ADAApplicantList() {
     loadADAPendings,
     loadADAApproved,
     pendingMeta,
+    approvedMeta,
   } = useApplicants();
   const { districtName, blockName } = useDataDirs();
 
@@ -43,7 +44,7 @@ export default function ADAApplicantList() {
     }
 
     if (isApproved) {
-      loadADAApproved();
+      loadADAApproved(page);
       return;
     }
 
@@ -81,7 +82,9 @@ export default function ADAApplicantList() {
     return arr;
   }, [applicants, isPending, isApproved, gpFilter, applied]);
 
-  const totalPages = isPending ? Math.max(1, pendingMeta.totalPages || 1) : Math.max(1, list.length);
+  const activeMeta = isPending ? pendingMeta : isApproved ? approvedMeta : null;
+  const isPagedRoute = isPending || isApproved;
+  const totalPages = isPagedRoute ? Math.max(1, activeMeta?.totalPages || 1) : Math.max(1, list.length);
   const paginatedList = list;
 
   const searchHeading = isPending
@@ -95,6 +98,7 @@ export default function ADAApplicantList() {
     : isApproved
       ? 'Approved Applicant List'
       : 'Registered Applicant List';
+  const listCount = isPagedRoute ? (activeMeta?.totalCount || list.length) : list.length;
 
   const handleSearch = () => {
     setApplied({
@@ -116,9 +120,9 @@ export default function ADAApplicantList() {
   };
 
   useEffect(() => {
-    if (!isPending) return;
+    if (!isPagedRoute) return;
     if (page > totalPages) setPage(totalPages);
-  }, [isPending, page, totalPages]);
+  }, [isPagedRoute, page, totalPages]);
 
   const goPage = (nextPage) => {
     if (nextPage >= 1 && nextPage <= totalPages) setPage(nextPage);
@@ -198,7 +202,7 @@ export default function ADAApplicantList() {
 
           <div className="flex items-center justify-between mb-2">
             <p className="text-[#0891b2] font-bold text-sm">
-              {listHeading} ({list.length})
+              {listHeading} ({listCount})
             </p>
             <button
               type="button"
@@ -209,7 +213,7 @@ export default function ADAApplicantList() {
                 }
 
                 if (isApproved) {
-                  loadADAApproved();
+                  loadADAApproved(page);
                   return;
                 }
 
@@ -254,9 +258,9 @@ export default function ADAApplicantList() {
                   paginatedList.map((row, idx) => {
                     const khetmajurId = row.khetmajurId || row.khetmajur_id || row.id;
                     const isBusy = actingId === row.id;
-                    const perPage = pendingMeta.perPage || paginatedList.length || 20;
-                    const currentPage = pendingMeta.currentPage || page;
-                    const rowNumber = isPending ? (currentPage - 1) * perPage + idx + 1 : idx + 1;
+                    const perPage = activeMeta?.perPage || paginatedList.length || 20;
+                    const currentPage = activeMeta?.currentPage || page;
+                    const rowNumber = isPagedRoute ? (currentPage - 1) * perPage + idx + 1 : idx + 1;
 
                     return (
                       <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50">
@@ -356,18 +360,18 @@ export default function ADAApplicantList() {
             </table>
           </div>
 
-          {isPending && list.length > 0 && (
+          {isPagedRoute && list.length > 0 && (
             <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
               <span>
-                Showing <strong>{Math.min(((pendingMeta.currentPage || page) - 1) * (pendingMeta.perPage || list.length || 20) + 1, pendingMeta.totalCount || list.length)}</strong> to{' '}
-                <strong>{Math.min((pendingMeta.currentPage || page) * (pendingMeta.perPage || list.length || 20), pendingMeta.totalCount || list.length)}</strong> of{' '}
-                <strong>{pendingMeta.totalCount || list.length}</strong> records
+                Showing <strong>{Math.min(((activeMeta?.currentPage || page) - 1) * (activeMeta?.perPage || list.length || 20) + 1, activeMeta?.totalCount || list.length)}</strong> to{' '}
+                <strong>{Math.min((activeMeta?.currentPage || page) * (activeMeta?.perPage || list.length || 20), activeMeta?.totalCount || list.length)}</strong> of{' '}
+                <strong>{activeMeta?.totalCount || list.length}</strong> records
               </span>
               <div className="flex items-center gap-1">
                 <button
                   type="button"
                   onClick={() => goPage(1)}
-                  disabled={(pendingMeta.currentPage || page) === 1}
+                  disabled={(activeMeta?.currentPage || page) === 1}
                   className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
                 >
                   First
@@ -378,7 +382,7 @@ export default function ADAApplicantList() {
                     type="button"
                     onClick={() => goPage(p)}
                     className={`px-2.5 py-1 text-xs border rounded transition-colors ${
-                      p === (pendingMeta.currentPage || page)
+                      p === (activeMeta?.currentPage || page)
                         ? 'bg-[#3eb0c9] text-white border-[#3eb0c9]'
                         : 'border-gray-300 hover:bg-gray-100'
                     }`}
@@ -386,7 +390,7 @@ export default function ADAApplicantList() {
                     {p}
                   </button>
                 ))}
-                {totalPages > 3 && (pendingMeta.currentPage || page) < totalPages && (
+                {totalPages > 3 && (activeMeta?.currentPage || page) < totalPages && (
                   <>
                     <span className="px-1 text-gray-400">...</span>
                     <button
@@ -401,7 +405,7 @@ export default function ADAApplicantList() {
                 <button
                   type="button"
                   onClick={() => goPage(page + 1)}
-                  disabled={(pendingMeta.currentPage || page) === totalPages}
+                  disabled={(activeMeta?.currentPage || page) === totalPages}
                   className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
                 >
                   Next
@@ -409,7 +413,7 @@ export default function ADAApplicantList() {
                 <button
                   type="button"
                   onClick={() => goPage(totalPages)}
-                  disabled={(pendingMeta.currentPage || page) === totalPages}
+                  disabled={(activeMeta?.currentPage || page) === totalPages}
                   className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
                 >
                   Last

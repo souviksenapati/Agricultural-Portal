@@ -5,20 +5,20 @@ import { useDataDirs } from '../../context/DataDirsContext';
 
 export default function ADARejectedApplicantList() {
   const navigate = useNavigate();
-  const { applicants, loadADARejected } = useApplicants();
+  const { applicants, loadADARejected, rejectedMeta } = useApplicants();
   const { gramPanchayats } = useDataDirs();
 
-  const [filters, setFilters] = useState({
-    ack: '',
-    name: '',
-    aadhaar: '',
-    mobile: '',
-    gp: '',
-  });
+  const [ackInput, setAckInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
+  const [aadhaarInput, setAadhaarInput] = useState('');
+  const [mobileInput, setMobileInput] = useState('');
+  const [gpInput, setGpInput] = useState('');
+  const [filters, setFilters] = useState({ ack: '', name: '', aadhaar: '', mobile: '', gp: '' });
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
-    loadADARejected();
-  }, [loadADARejected]);
+    loadADARejected(page);
+  }, [loadADARejected, page]);
 
   const rejectedApplicants = useMemo(() => {
     return applicants
@@ -35,12 +35,42 @@ export default function ADARejectedApplicantList() {
       });
   }, [applicants, filters]);
 
-  const handleChange = (e) => {
-    setFilters((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const totalPages = Math.max(1, rejectedMeta.totalPages || 1);
+  const listCount = rejectedMeta.totalCount || rejectedApplicants.length;
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
+  const handleSearch = () => {
+    setFilters({
+      ack: ackInput,
+      name: nameInput,
+      aadhaar: aadhaarInput,
+      mobile: mobileInput,
+      gp: gpInput,
+    });
+    setPage(1);
   };
 
   const handleReset = () => {
+    setAckInput('');
+    setNameInput('');
+    setAadhaarInput('');
+    setMobileInput('');
+    setGpInput('');
     setFilters({ ack: '', name: '', aadhaar: '', mobile: '', gp: '' });
+    setPage(1);
+  };
+
+  const goPage = (nextPage) => {
+    if (nextPage >= 1 && nextPage <= totalPages) setPage(nextPage);
+  };
+
+  const visiblePages = () => {
+    const pages = [];
+    for (let i = 1; i <= Math.min(totalPages, 3); i += 1) pages.push(i);
+    return pages;
   };
 
   return (
@@ -52,17 +82,16 @@ export default function ADARejectedApplicantList() {
 
         <div className="mb-6">
           <div className="flex flex-wrap gap-3 items-end">
-            <FilterInput label="Acknowledgement ID" name="ack" value={filters.ack} onChange={handleChange} />
-            <FilterInput label="Applicant Name" name="name" value={filters.name} onChange={handleChange} />
-            <FilterInput label="Aadhar No" name="aadhaar" value={filters.aadhaar} onChange={handleChange} narrow />
-            <FilterInput label="Mobile No" name="mobile" value={filters.mobile} onChange={handleChange} narrow />
+            <FilterInput label="Acknowledgement ID" value={ackInput} onChange={setAckInput} />
+            <FilterInput label="Applicant Name" value={nameInput} onChange={setNameInput} />
+            <FilterInput label="Aadhar No" value={aadhaarInput} onChange={setAadhaarInput} narrow />
+            <FilterInput label="Mobile No" value={mobileInput} onChange={setMobileInput} narrow />
 
             <div className="flex flex-col gap-1">
               <label className="text-xs text-gray-600">Gram Panchayat</label>
               <select
-                name="gp"
-                value={filters.gp}
-                onChange={handleChange}
+                value={gpInput}
+                onChange={(e) => setGpInput(e.target.value)}
                 className="border border-gray-300 rounded px-3 py-1.5 text-sm w-52 focus:outline-none focus:border-[#3eb0c9]"
               >
                 <option value="">Select Gram Panchayat</option>
@@ -73,7 +102,7 @@ export default function ADARejectedApplicantList() {
             </div>
 
             <div className="flex gap-2 pb-0.5">
-              <button type="button" className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-1.5 rounded transition-colors">
+              <button type="button" onClick={handleSearch} className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-5 py-1.5 rounded transition-colors">
                 Search
               </button>
               <button
@@ -89,11 +118,11 @@ export default function ADARejectedApplicantList() {
 
         <div className="flex items-center justify-between mb-2">
           <p className="text-[#0891b2] font-bold text-sm">
-            Rejected Applicant List ({rejectedApplicants.length})
+            Rejected Applicant List ({listCount})
           </p>
           <button
             type="button"
-            onClick={loadADARejected}
+            onClick={() => loadADARejected(page)}
             className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-xs font-medium px-4 py-1.5 rounded transition-colors"
           >
             Refresh
@@ -129,7 +158,7 @@ export default function ADARejectedApplicantList() {
               ) : (
                 rejectedApplicants.map((app, index) => (
                   <tr key={app.id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-3 py-2 text-center text-xs text-gray-500 border-r border-gray-100">{index + 1}</td>
+                    <td className="px-3 py-2 text-center text-xs text-gray-500 border-r border-gray-100">{((rejectedMeta.currentPage || page) - 1) * (rejectedMeta.perPage || rejectedApplicants.length || 20) + index + 1}</td>
                     <td className="px-3 py-2 text-center text-xs font-mono text-[#0891b2] border-r border-gray-100">{app.ackId}</td>
                     <td className="px-3 py-2 text-center text-xs border-r border-gray-100">{app.name}</td>
                     <td className="px-3 py-2 text-center text-xs font-mono border-r border-gray-100">{app.aadhaar}</td>
@@ -152,20 +181,81 @@ export default function ADARejectedApplicantList() {
             </tbody>
           </table>
         </div>
+
+        {rejectedApplicants.length > 0 && (
+          <div className="flex items-center justify-between mt-4 text-sm text-gray-600">
+            <span>
+              Showing <strong>{Math.min(((rejectedMeta.currentPage || page) - 1) * (rejectedMeta.perPage || rejectedApplicants.length || 20) + 1, rejectedMeta.totalCount || rejectedApplicants.length)}</strong> to{' '}
+              <strong>{Math.min((rejectedMeta.currentPage || page) * (rejectedMeta.perPage || rejectedApplicants.length || 20), rejectedMeta.totalCount || rejectedApplicants.length)}</strong> of{' '}
+              <strong>{rejectedMeta.totalCount || rejectedApplicants.length}</strong> records
+            </span>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => goPage(1)}
+                disabled={(rejectedMeta.currentPage || page) === 1}
+                className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
+              >
+                First
+              </button>
+              {visiblePages().map((p) => (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => goPage(p)}
+                  className={`px-2.5 py-1 text-xs border rounded transition-colors ${
+                    p === (rejectedMeta.currentPage || page)
+                      ? 'bg-[#3eb0c9] text-white border-[#3eb0c9]'
+                      : 'border-gray-300 hover:bg-gray-100'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+              {totalPages > 3 && (rejectedMeta.currentPage || page) < totalPages && (
+                <>
+                  <span className="px-1 text-gray-400">...</span>
+                  <button
+                    type="button"
+                    onClick={() => goPage(totalPages)}
+                    className="px-2.5 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100"
+                  >
+                    {totalPages}
+                  </button>
+                </>
+              )}
+              <button
+                type="button"
+                onClick={() => goPage(page + 1)}
+                disabled={(rejectedMeta.currentPage || page) === totalPages}
+                className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
+              >
+                Next
+              </button>
+              <button
+                type="button"
+                onClick={() => goPage(totalPages)}
+                disabled={(rejectedMeta.currentPage || page) === totalPages}
+                className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-100"
+              >
+                Last
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
 }
 
-function FilterInput({ label, name, value, onChange, narrow = false }) {
+function FilterInput({ label, value, onChange, narrow = false }) {
   return (
     <div className="flex flex-col gap-1">
       <label className="text-xs text-gray-600">{label}</label>
       <input
         type="text"
-        name={name}
         value={value}
-        onChange={onChange}
+        onChange={(e) => onChange(e.target.value)}
         className={`border border-gray-300 rounded px-3 py-1.5 text-sm ${narrow ? 'w-40' : 'w-52'} focus:outline-none focus:border-[#3eb0c9]`}
       />
     </div>

@@ -485,9 +485,9 @@ export async function listADAPendings(page = 1) {
   };
 }
 
-export async function listADAApproved() {
-  const data = await apiGet('/v1/ada_pendings/approved', { auth: true });
-  return extractCollection(data, [
+export async function listADAApproved(page = 1) {
+  const data = await apiGet(`/v1/ada_pendings/approved?page=${page}`, { auth: true });
+  const items = extractCollection(data, [
     'ada_pendings',
     'approved_lists',
     'approved_list',
@@ -496,11 +496,16 @@ export async function listADAApproved() {
     'items',
     'records',
   ]);
+
+  return {
+    items,
+    meta: data?.meta || data?.data?.meta || {},
+  };
 }
 
-export async function listADARejected() {
-  const data = await apiGet('/v1/ada_pendings/rejected', { auth: true });
-  return extractCollection(data, [
+export async function listADARejected(page = 1) {
+  const data = await apiGet(`/v1/ada_pendings/rejected?page=${page}`, { auth: true });
+  const items = extractCollection(data, [
     'ada_pendings',
     'rejected_lists',
     'rejected_list',
@@ -509,11 +514,16 @@ export async function listADARejected() {
     'items',
     'records',
   ]);
+
+  return {
+    items,
+    meta: data?.meta || data?.data?.meta || {},
+  };
 }
 
-export async function listADAReverted() {
-  const data = await apiGet('/v1/ada_pendings/reverted', { auth: true });
-  return extractCollection(data, [
+export async function listADAReverted(page = 1) {
+  const data = await apiGet(`/v1/ada_pendings/reverted?page=${page}`, { auth: true });
+  const items = extractCollection(data, [
     'ada_pendings',
     'reverted_lists',
     'reverted_list',
@@ -522,6 +532,11 @@ export async function listADAReverted() {
     'items',
     'records',
   ]);
+
+  return {
+    items,
+    meta: data?.meta || data?.data?.meta || {},
+  };
 }
 
 export async function getFarmer(id) {

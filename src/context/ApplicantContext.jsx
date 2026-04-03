@@ -54,6 +54,24 @@ export function ApplicantProvider({ children }) {
     totalCount: 0,
     perPage: 20,
   });
+  const [approvedMeta, setApprovedMeta] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    perPage: 20,
+  });
+  const [rejectedMeta, setRejectedMeta] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    perPage: 20,
+  });
+  const [revertedMeta, setRevertedMeta] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0,
+    perPage: 20,
+  });
 
   const applyApplicants = useCallback((normalized) => {
     const deletedApplicants = getDeletedFarmers();
@@ -130,17 +148,23 @@ export function ApplicantProvider({ children }) {
     }
   }, [applyApplicants]);
 
-  const loadADAApproved = useCallback(async () => {
+  const loadADAApproved = useCallback(async (page = 1) => {
     setLoadingFarmers(true);
     setFarmersError('');
 
     try {
-      const arr = await listADAApproved();
-      const normalized = arr.map((item) => ({
+      const { items, meta } = await listADAApproved(page);
+      const normalized = items.map((item) => ({
         ...normalizeFarmer(item),
         status: 'approved',
       }));
       applyApplicants(normalized);
+      setApprovedMeta({
+        currentPage: meta?.current_page || page,
+        totalPages: meta?.total_pages || 1,
+        totalCount: meta?.total_count || normalized.length,
+        perPage: meta?.per_page || 20,
+      });
     } catch (e) {
       console.error('[Applicants] listADAApproved error:', e.message);
       setApplicants([]);
@@ -150,23 +174,35 @@ export function ApplicantProvider({ children }) {
         mergedCount: 0,
         loadedAt: null,
       });
+      setApprovedMeta({
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        perPage: 20,
+      });
     } finally {
       setLoadingFarmers(false);
     }
   }, [applyApplicants]);
 
-  const loadADARejected = useCallback(async () => {
+  const loadADARejected = useCallback(async (page = 1) => {
     setLoadingFarmers(true);
     setFarmersError('');
 
     try {
-      const arr = await listADARejected();
-      const normalized = arr.map((item) => ({
+      const { items, meta } = await listADARejected(page);
+      const normalized = items.map((item) => ({
         ...normalizeFarmer(item),
         status: 'rejected',
         is_rejected: true,
       }));
       applyApplicants(normalized);
+      setRejectedMeta({
+        currentPage: meta?.current_page || page,
+        totalPages: meta?.total_pages || 1,
+        totalCount: meta?.total_count || normalized.length,
+        perPage: meta?.per_page || 20,
+      });
     } catch (e) {
       console.error('[Applicants] listADARejected error:', e.message);
       setApplicants([]);
@@ -176,23 +212,35 @@ export function ApplicantProvider({ children }) {
         mergedCount: 0,
         loadedAt: null,
       });
+      setRejectedMeta({
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        perPage: 20,
+      });
     } finally {
       setLoadingFarmers(false);
     }
   }, [applyApplicants]);
 
-  const loadADAReverted = useCallback(async () => {
+  const loadADAReverted = useCallback(async (page = 1) => {
     setLoadingFarmers(true);
     setFarmersError('');
 
     try {
-      const arr = await listADAReverted();
-      const normalized = arr.map((item) => ({
+      const { items, meta } = await listADAReverted(page);
+      const normalized = items.map((item) => ({
         ...normalizeFarmer(item),
         status: 'reverted',
         is_reverted: true,
       }));
       applyApplicants(normalized);
+      setRevertedMeta({
+        currentPage: meta?.current_page || page,
+        totalPages: meta?.total_pages || 1,
+        totalCount: meta?.total_count || normalized.length,
+        perPage: meta?.per_page || 20,
+      });
     } catch (e) {
       console.error('[Applicants] listADAReverted error:', e.message);
       setApplicants([]);
@@ -201,6 +249,12 @@ export function ApplicantProvider({ children }) {
         serverCount: 0,
         mergedCount: 0,
         loadedAt: null,
+      });
+      setRevertedMeta({
+        currentPage: 1,
+        totalPages: 1,
+        totalCount: 0,
+        perPage: 20,
       });
     } finally {
       setLoadingFarmers(false);
@@ -296,6 +350,9 @@ export function ApplicantProvider({ children }) {
         farmersError,
         farmersMeta,
         pendingMeta,
+        approvedMeta,
+        rejectedMeta,
+        revertedMeta,
         loadFarmers,
         loadADAPendings,
         loadADAApproved,
