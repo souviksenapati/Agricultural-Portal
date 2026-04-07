@@ -5,10 +5,11 @@ import { useNavigate } from 'react-router-dom';
 const ROLE_HOME = {
   gramdoot: '/portal/dashboard',
   ada: '/portal/ada/dashboard',
+  dda: '/portal/dda/dashboard',
   sno: '/portal/sno/dashboard',
   bank: '/portal/bank/dashboard',
 };
-const ROLE_LABELS = { gramdoot: 'Gramdoot', ada: 'ADA', sno: 'SNO', bank: 'Bank' };
+const ROLE_LABELS = { gramdoot: 'Gramdoot', ada: 'ADA', dda: 'DDA', sno: 'SNO', bank: 'Bank' };
 
 export default function TopBar() {
   const { user, login, logout } = useAuth();

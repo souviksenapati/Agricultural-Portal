@@ -14,6 +14,7 @@ import {
 const ROLE_HOME = {
   gramdoot: '/portal/dashboard',
   ada: '/portal/ada/dashboard',
+  dda: '/portal/dda/dashboard',
   sno: '/portal/sno/dashboard',
   bank: '/portal/bank/dashboard',
 };
@@ -21,6 +22,7 @@ const ROLE_HOME = {
 const ROLE_LABELS = {
   gramdoot: 'Gramdoot',
   ada: 'ADA',
+  dda: 'DDA',
   sno: 'SNO',
   bank: 'Bank',
 };
@@ -38,8 +40,12 @@ export default function Header() {
   const [snoApplicantOpen, setSnoApplicantOpen] = useState(false);
   const [snoMemberOpen, setSnoMemberOpen] = useState(false);
   const [snoDbtOpen, setSnoDbtOpen] = useState(false);
+  const [ddaReportOpen, setDdaReportOpen] = useState(false);
+  const [ddaApplicantOpen, setDdaApplicantOpen] = useState(false);
+  const [ddaMemberOpen, setDdaMemberOpen] = useState(false);
   const [misDownloading, setMisDownloading] = useState('');
   const [snoReportDownloading, setSnoReportDownloading] = useState(false);
+  const [ddaReportDownloading, setDdaReportDownloading] = useState(false);
 
   const quickRef = useRef(null);
   const adaRef = useRef(null);
@@ -49,6 +55,9 @@ export default function Header() {
   const snoApplicantRef = useRef(null);
   const snoMemberRef = useRef(null);
   const snoDbtRef = useRef(null);
+  const ddaReportRef = useRef(null);
+  const ddaApplicantRef = useRef(null);
+  const ddaMemberRef = useRef(null);
 
   const dashboardPath = ROLE_HOME[user?.role] || '/';
   const isExactActive = (path) => location.pathname === path;
@@ -63,6 +72,9 @@ export default function Header() {
     setSnoApplicantOpen(false);
     setSnoMemberOpen(false);
     setSnoDbtOpen(false);
+    setDdaReportOpen(false);
+    setDdaApplicantOpen(false);
+    setDdaMemberOpen(false);
   };
 
   useEffect(() => {
@@ -76,6 +88,9 @@ export default function Header() {
         snoApplicantRef,
         snoMemberRef,
         snoDbtRef,
+        ddaReportRef,
+        ddaApplicantRef,
+        ddaMemberRef,
       ];
 
       const clickedInside = refs.some((ref) => ref.current?.contains(event.target));
@@ -222,6 +237,24 @@ export default function Header() {
     setIsMenuOpen(false);
   };
 
+  const handleDdaReportDownload = async () => {
+    try {
+      setDdaReportDownloading(true);
+      const rows = await listFarmers();
+      const normalized = rows
+        .map(normalizeFarmer)
+        .filter((app) => app.status !== 'deleted');
+      downloadApplicantsCsv('dda_report', normalized);
+    } catch (error) {
+      window.alert(error.message || 'Report download failed');
+    } finally {
+      setDdaReportDownloading(false);
+    }
+
+    closeAllDropdowns();
+    setIsMenuOpen(false);
+  };
+
   const toggleDropdown = (key) => {
     const nextState = {
       quick: key === 'quick' ? !quickRegOpen : false,
@@ -232,6 +265,9 @@ export default function Header() {
       snoApplicant: key === 'snoApplicant' ? !snoApplicantOpen : false,
       snoMember: key === 'snoMember' ? !snoMemberOpen : false,
       snoDbt: key === 'snoDbt' ? !snoDbtOpen : false,
+      ddaReport: key === 'ddaReport' ? !ddaReportOpen : false,
+      ddaApplicant: key === 'ddaApplicant' ? !ddaApplicantOpen : false,
+      ddaMember: key === 'ddaMember' ? !ddaMemberOpen : false,
     };
 
     setQuickRegOpen(nextState.quick);
@@ -242,6 +278,9 @@ export default function Header() {
     setSnoApplicantOpen(nextState.snoApplicant);
     setSnoMemberOpen(nextState.snoMember);
     setSnoDbtOpen(nextState.snoDbt);
+    setDdaReportOpen(nextState.ddaReport);
+    setDdaApplicantOpen(nextState.ddaApplicant);
+    setDdaMemberOpen(nextState.ddaMember);
   };
 
   const DropdownIcon = () => (
@@ -432,6 +471,71 @@ export default function Header() {
                   </div>
                 </>
               )}
+
+              {user.role === 'dda' && (
+                <>
+                  <div className="relative" ref={ddaReportRef}>
+                    <button
+                      type="button"
+                      onClick={() => toggleDropdown('ddaReport')}
+                      className="flex items-center gap-1 hover:text-[#0891b2]"
+                    >
+                      Report
+                      <DropdownIcon />
+                    </button>
+
+                    {ddaReportOpen && (
+                      <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg z-50">
+                        <button
+                          type="button"
+                          onClick={handleDdaReportDownload}
+                          disabled={ddaReportDownloading}
+                          className="block w-full text-left px-4 py-2 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {ddaReportDownloading ? 'Downloading Report...' : 'Download Report'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative" ref={ddaApplicantRef}>
+                    <button
+                      type="button"
+                      onClick={() => toggleDropdown('ddaApplicant')}
+                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/dda/approved') || isPathActive('/portal/dda/send_to_bank') || isPathActive('/portal/dda/rejected_list') ? 'text-[#0891b2] font-semibold' : ''}`}
+                    >
+                      Applicant List
+                      <DropdownIcon />
+                    </button>
+
+                    {ddaApplicantOpen && (
+                      <div className="absolute mt-2 w-56 bg-white border rounded shadow-lg z-50">
+                        <Link to="/portal/dda/approved" className="block px-4 py-2 hover:bg-gray-50">ADA Approved List</Link>
+                        <Link to="/portal/dda/send_to_bank" className="block px-4 py-2 hover:bg-gray-50">Send to Bank List</Link>
+                        <Link to="/portal/dda/rejected_list" className="block px-4 py-2 hover:bg-gray-50">Rejected List</Link>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="relative" ref={ddaMemberRef}>
+                    <button
+                      type="button"
+                      onClick={() => toggleDropdown('ddaMember')}
+                      className={`flex items-center gap-1 hover:text-[#0891b2] ${isPathActive('/portal/dda/members') ? 'text-[#0891b2] font-semibold' : ''}`}
+                    >
+                      Members
+                      <DropdownIcon />
+                    </button>
+
+                    {ddaMemberOpen && (
+                      <div className="absolute mt-2 w-52 bg-white border rounded shadow-lg z-50">
+                        <Link to="/portal/dda/members/new" className="block px-4 py-2 hover:bg-gray-50">New Member</Link>
+                        <Link to="/portal/dda/members" className="block px-4 py-2 hover:bg-gray-50">Member List</Link>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
             </nav>
 
             <div className="sm:hidden">
@@ -513,6 +617,30 @@ export default function Header() {
                 <div>
                   <p className="font-semibold">DBT</p>
                   <Link to="/portal/sno/payment_file_list" className="block pl-3 py-1">Payment File List</Link>
+                </div>
+              </>
+            )}
+
+            {user.role === 'dda' && (
+              <>
+                <div>
+                  <p className="font-semibold">Report</p>
+                  <button type="button" onClick={handleDdaReportDownload} disabled={ddaReportDownloading} className="block pl-3 py-1 text-left disabled:opacity-50 disabled:cursor-not-allowed">
+                    {ddaReportDownloading ? 'Downloading Report...' : 'Download Report'}
+                  </button>
+                </div>
+
+                <div>
+                  <p className="font-semibold">Applicant List</p>
+                  <Link to="/portal/dda/approved" className="block pl-3 py-1">ADA Approved List</Link>
+                  <Link to="/portal/dda/send_to_bank" className="block pl-3 py-1">Send to Bank List</Link>
+                  <Link to="/portal/dda/rejected_list" className="block pl-3 py-1">Rejected List</Link>
+                </div>
+
+                <div>
+                  <p className="font-semibold">Members</p>
+                  <Link to="/portal/dda/members/new" className="block pl-3 py-1">New Member</Link>
+                  <Link to="/portal/dda/members" className="block pl-3 py-1">Member List</Link>
                 </div>
               </>
             )}
