@@ -12,6 +12,7 @@ export default function PortalRoute({ role, children }) {
     const homes = {
       gramdoot: '/portal/dashboard',
       ada: '/portal/ada/dashboard',
+      dda: '/portal/dda/dashboard',
       sno: '/portal/sno/dashboard',
       bank: '/portal/bank/dashboard',
     };

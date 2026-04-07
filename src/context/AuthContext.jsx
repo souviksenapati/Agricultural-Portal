@@ -6,6 +6,8 @@ const AUTH_API = '/api/v1/login';
 const ROLE_MAP = {
   Gramdoot: 'gramdoot',
   ADA: 'ada',
+  DDA: 'dda',
+  'Dda (admin)': 'dda',
   'Asstt. da (block)': 'ada',
   SNO: 'sno',
   Bank: 'bank',
@@ -18,11 +20,12 @@ function resolveRole(role_name) {
   if (exact) return exact;
 
   const lower = role_name.toLowerCase();
-  if (lower.includes('admin')) return 'admin';
   if (lower.includes('gramdoot')) return 'gramdoot';
+  if (lower.includes('dda')) return 'dda';
   if (lower.includes('ada') || lower.includes('asstt')) return 'ada';
   if (lower.includes('sno')) return 'sno';
   if (lower.includes('bank')) return 'bank';
+  if (lower.includes('admin')) return 'admin';
 
   console.warn('[AUTH] Unknown role_name:', role_name, '- defaulting to gramdoot');
   return 'gramdoot';

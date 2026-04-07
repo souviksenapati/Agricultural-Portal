@@ -12,13 +12,11 @@ export default function ADAApprovedApplicantList() {
     const { applicants, deleteApplicant, loadFarmers } = useApplicants();
     const { districtName, blockName } = useDataDirs();
 
-    // ✅ Load data once
     useEffect(() => {
         loadFarmers();
     }, []);
 
 
-    // Search field states (applied only on Search click)
     const [ackInput, setAckInput] = useState('');
     const [nameInput, setNameInput] = useState('');
     const [aadhaarInput, setAadhaarInput] = useState('');
@@ -45,15 +43,14 @@ export default function ADAApprovedApplicantList() {
         setApplied({ ack: '', name: '', aadhaar: '', mobile: '' });
     };
 
-    // ✅ FIXED FILTER LOGIC
     const list = useMemo(() => {
         let arr = applicants
-            .filter((a) => a.status !== 'deleted')   // exclude deleted
-            .filter((a) => a.status === 'approved'); // only approved
+            .filter((a) => a.status !== 'deleted')
+            .filter((a) => a.status === 'approved');
 
         if (gpFilter) {
             arr = arr.filter(
-                (a) => (a.fullForm?.gramPanchayat || '—') === gpFilter
+                (a) => (a.fullForm?.gramPanchayat || '-') === gpFilter
             );
         }
 
@@ -89,12 +86,10 @@ export default function ADAApprovedApplicantList() {
             <main className="flex-grow w-full px-4 py-8">
                 <div className="max-w-7xl mx-auto">
 
-                    {/* Heading */}
                     <h2 className="text-base font-bold text-gray-700 tracking-widest uppercase mb-4">
                         Search Approved Applicant
                     </h2>
 
-                    {/* Search form */}
                     <div className="mb-6">
                         <div className="flex flex-wrap gap-3 items-end">
                             <div className="flex flex-col gap-1">
@@ -150,7 +145,6 @@ export default function ADAApprovedApplicantList() {
                         </div>
                     </div>
 
-                    {/* Error */}
                     {actionError && (
                         <div className="mb-3 bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded text-sm">
                             {actionError}
@@ -158,7 +152,6 @@ export default function ADAApprovedApplicantList() {
                     )}
 
 
-                    {/* List Heading and Refresh */}
                     <div className="flex items-center justify-between mb-2">
                         <p className="text-[#0891b2] font-bold text-sm">
                             Approved Applicant List ({list.length})
@@ -172,7 +165,6 @@ export default function ADAApprovedApplicantList() {
                         </button>
                     </div>
 
-                    {/* Table */}
                     <div className="overflow-x-auto border border-gray-200">
                         <table className="w-full text-sm border-collapse">
                             <thead>
@@ -205,7 +197,7 @@ export default function ADAApprovedApplicantList() {
                                         const yesNo = (value) => {
                                             if ([true, 'true', 1, '1'].includes(value)) return 'Yes';
                                             if ([false, 'false', 0, '0'].includes(value)) return 'No';
-                                            return '—';
+                                            return '-';
                                         };
                                         return (
                                             <tr key={row.id} className="border-b border-gray-100 hover:bg-gray-50">
@@ -215,10 +207,10 @@ export default function ADAApprovedApplicantList() {
                                                 <td className="px-3 py-2 text-center text-gray-700 text-xs border-r border-gray-100">{row.name}</td>
                                                 <td className="px-3 py-2 text-center font-mono text-xs text-gray-600 border-r border-gray-100">{row.aadhaar}</td>
                                                 <td className="px-3 py-2 text-center font-mono text-xs text-gray-600 border-r border-gray-100">{row.mobile}</td>
-                                                <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{row.fullForm?.bankName || '—'}</td>
-                                                <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{row.fullForm?.branchName || '—'}</td>
-                                                <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{row.fullForm?.accountNumber || '—'}</td>
-                                                <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{row.fullForm?.ifscCode || '—'}</td>
+                                                <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{row.fullForm?.bankName || '-'}</td>
+                                                <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{row.fullForm?.branchName || '-'}</td>
+                                                <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{row.fullForm?.accountNumber || '-'}</td>
+                                                <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{row.fullForm?.ifscCode || '-'}</td>
                                                 <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{yesNo(row.present_in_kb_n)}</td>
                                                 <td className="px-3 py-2 text-center text-xs text-gray-600 border-r border-gray-100">{yesNo(row.applied_for_yuvasathi)}</td>
                                                 <td className="px-3 py-2 text-center">
@@ -242,7 +234,6 @@ export default function ADAApprovedApplicantList() {
                 </div>
             </main>
 
-            {/* Delete Modal */}
             {confirmDelete && (
                 <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
                     <div className="bg-white p-5 rounded">
@@ -273,7 +264,6 @@ export default function ADAApprovedApplicantList() {
     );
 }
 
-// Input
 function Input({ label, value, setValue }) {
     return (
         <div className="flex flex-col gap-1">
@@ -287,7 +277,6 @@ function Input({ label, value, setValue }) {
     );
 }
 
-// Button
 function ActionBtn({ children, onClick, color = "cyan" }) {
     const colors = {
         cyan: "bg-[#3eb0c9]",

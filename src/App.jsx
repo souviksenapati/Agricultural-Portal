@@ -32,6 +32,7 @@ import NewMember from './pages/ada/NewMember';
 import SNOPaymentFileList from './pages/sno/PaymentFileList';
 import SNODDAApprovedList from './pages/sno/ApprovedList';
 import SNOApprovedList from './pages/sno/SNOApprovedList';
+import DDADDAApprovedList from './pages/dda/ApprovedList';
 
 const GramdootDashboard = React.lazy(() => import('./pages/gramdoot/Dashboard'));
 const RegistrationForm = React.lazy(() => import('./pages/gramdoot/RegistrationForm'));
@@ -41,6 +42,7 @@ const ApplicantList = React.lazy(() => import('./pages/gramdoot/ApplicantList'))
 const ADADashboard = React.lazy(() => import('./pages/ada/Dashboard'));
 const ADAApplicantList = React.lazy(() => import('./pages/ada/ApplicantList'));
 const SNODashboard = React.lazy(() => import('./pages/sno/Dashboard'));
+const DDADashboard = React.lazy(() => import('./pages/dda/Dashboard'));
 const BankDashboard = React.lazy(() => import('./pages/bank/Dashboard'));
 
 //  Unified App Layout 
@@ -140,6 +142,22 @@ export default function App() {
                 element={<AppLayout wrapMain={false}><PortalRoute role="sno"><SNOPaymentFileList /></PortalRoute></AppLayout>} />
               <Route path="/portal/sno/registration/:id/view"
                 element={<AppLayout wrapMain={false}><PortalRoute role="sno"><ViewApplication /></PortalRoute></AppLayout>} />
+
+              {/*  DDA  */}
+              <Route path="/portal/dda/dashboard"
+                element={<AppLayout wrapMain={false}><PortalRoute role="dda"><DDADashboard /></PortalRoute></AppLayout>} />
+              <Route path="/portal/dda/approved"
+                element={<AppLayout wrapMain={false}><PortalRoute role="dda"><DDADDAApprovedList /></PortalRoute></AppLayout>} />
+              <Route path="/portal/dda/send_to_bank"
+                element={<AppLayout wrapMain={false}><PortalRoute role="dda"><ADASentToBankApplicantList /></PortalRoute></AppLayout>} />
+              <Route path="/portal/dda/rejected_list"
+                element={<AppLayout wrapMain={false}><PortalRoute role="dda"><ADARejectedApplicantList /></PortalRoute></AppLayout>} />
+              <Route path="/portal/dda/members"
+                element={<AppLayout wrapMain={false}><PortalRoute role="dda"><ADAMembersList /></PortalRoute></AppLayout>} />
+              <Route path="/portal/dda/members/new"
+                element={<AppLayout wrapMain={false}><PortalRoute role="dda"><NewMember /></PortalRoute></AppLayout>} />
+              <Route path="/portal/dda/registration/:id/view"
+                element={<AppLayout wrapMain={false}><PortalRoute role="dda"><ViewApplication /></PortalRoute></AppLayout>} />
 
               {/*  Bank  */}
               <Route path="/portal/bank/dashboard"

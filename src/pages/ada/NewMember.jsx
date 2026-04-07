@@ -5,8 +5,10 @@ import { useDataDirs } from "../../context/DataDirsContext";
 
 export default function NewMember() {
     const location = useLocation();
-    const isSnoMemberPage = location.pathname.startsWith("/portal/sno/");
-    const defaultRole = isSnoMemberPage ? "Dda (admin)" : "Gramdoot";
+    const isAdminMemberPage =
+        location.pathname.startsWith("/portal/sno/") ||
+        location.pathname.startsWith("/portal/dda/");
+    const defaultRole = isAdminMemberPage ? "Dda (admin)" : "Gramdoot";
 
     const {
         districts,
@@ -268,7 +270,7 @@ export default function NewMember() {
 
                         <div className="grid grid-cols-4 gap-4 mb-6">
                             <Field label="Role *">
-                                {isSnoMemberPage ? (
+                                {isAdminMemberPage ? (
                                     <input
                                         type="text"
                                         value="Dda (admin)"
