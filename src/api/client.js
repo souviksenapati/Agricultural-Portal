@@ -875,6 +875,17 @@ export async function toggleMemberActive(id) {
   return data?.data || data?.member || data;
 }
 
+export async function fetchMemberSubRoles() {
+  const data = await apiGet('/v1/members/sub_roles', { auth: true });
+  const payload = data?.data || data || {};
+  return {
+    roles: Array.isArray(payload.roles) ? payload.roles : [],
+    districts: Array.isArray(payload.districts) ? payload.districts : [],
+    blocks: Array.isArray(payload.blocks) ? payload.blocks : [],
+    gram_panchayats: Array.isArray(payload.gram_panchayats) ? payload.gram_panchayats : [],
+  };
+}
+
 export async function listAgents() {
   return apiGet('/agents', { auth: true });
 }

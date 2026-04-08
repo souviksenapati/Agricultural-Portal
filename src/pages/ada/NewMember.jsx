@@ -1,34 +1,27 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { createAgent } from "../../api/client";
-import { useDataDirs } from "../../context/DataDirsContext";
+import { createAgent, fetchMemberSubRoles } from "../../api/client";
 import { useNotification } from "../../context/NotificationContext";
+import { useAuth } from "../../context/AuthContext";
 
 export default function NewMember() {
     const { notifySuccess, notifyError } = useNotification();
     const location = useLocation();
-    const isAdminMemberPage =
-        location.pathname.startsWith("/portal/sno/") ||
-        location.pathname.startsWith("/portal/dda/");
-    const defaultRole = isAdminMemberPage ? "Dda (admin)" : "Gramdoot";
 
-    const {
-        districts,
-        blocksByDistrict,
-        gpsByBlock,
-        loadDistricts,
-        loadBlocksByDistrict,
-        loadGpsByBlock,
-        loading: dataLoading,
-        locationLoading,
-    } = useDataDirs();
+    // ── Sub-roles API data ────────────────────────────────────────────
+    const [availableRoles, setAvailableRoles] = useState([]);
+    const [availableDistricts, setAvailableDistricts] = useState([]);
+    const [availableBlocks, setAvailableBlocks] = useState([]);
+    const [availableGPs, setAvailableGPs] = useState([]);
+    const [subRolesLoading, setSubRolesLoading] = useState(true);
 
+    // ── Form state ────────────────────────────────────────────────────
     const [formData, setFormData] = useState({
         email: "",
         mobile: "",
         password: "",
         confirmPassword: "",
-        role: defaultRole,
+        role_id: "",
         firstName: "",
         lastName: "",
         gender: "",
@@ -37,80 +30,83 @@ export default function NewMember() {
         gram_panchayat_id: "",
     });
 
+    const { user } = useAuth();
+    const isSNOPage = user?.role === 'sno';
+    const showBlockSection = !isSNOPage;
+
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
 
-    const currentUser = {
-        id: 1,
-        working_zone: { district_id: 10, block_id: 5 },
+    // ── Load sub_roles API on mount ───────────────────────────────────
+    useEffect(() => {
+        let cancelled = false;
+
+        async function load() {
+            setSubRolesLoading(true);
+            try {
+                const result = await fetchMemberSubRoles();
+                if (cancelled) return;
+
+                setAvailableRoles(result.roles);
+                setAvailableDistricts(result.districts);
+                setAvailableBlocks(result.blocks);
+                setAvailableGPs(result.gram_panchayats);
+
+                // Auto-select first role if available
+                if (result.roles.length > 0) {
+                    setFormData((prev) => ({
+                        ...prev,
+                        role_id: result.roles[0].id,
+                    }));
+                }
+            } catch (err) {
+                console.error("[NewMember] Failed to load sub_roles:", err);
+                if (!cancelled) {
+                    notifyError("Failed to load form options");
+                }
+            } finally {
+                if (!cancelled) setSubRolesLoading(false);
+            }
+        }
+
+        load();
+        return () => { cancelled = true; };
+    }, []);
+
+    // ── Filtered location helpers ─────────────────────────────────────
+    const getFilteredBlocks = () => {
+        if (!formData.district_id) return [];
+        // If blocks have district_id field, filter by it; otherwise show all
+        const hasDistrictId = availableBlocks.some((b) => b.district_id != null);
+        if (hasDistrictId) {
+            return availableBlocks.filter(
+                (b) => Number(b.district_id) === Number(formData.district_id)
+            );
+        }
+        return availableBlocks;
     };
 
-    const getAvailableDistricts = () => {
-        if (
-            formData.role === "Gramdoot" ||
-            formData.role === "Audit GD" ||
-            formData.role === "Dda (admin)"
-        ) {
-            return districts;
+    const getFilteredGPs = () => {
+        if (!formData.block_id) return [];
+        const hasBlockId = availableGPs.some((g) => g.block_id != null);
+        if (hasBlockId) {
+            return availableGPs.filter(
+                (g) => Number(g.block_id) === Number(formData.block_id)
+            );
         }
-        return [];
+        return availableGPs;
     };
 
-    const getAvailableBlocks = () => {
-        return blocksByDistrict(formData.district_id);
-    };
-
-    const getAvailableGPs = () => {
-        return gpsByBlock(formData.block_id);
-    };
-
-    useEffect(() => {
-        loadDistricts();
-    }, [loadDistricts]);
-
-    useEffect(() => {
-        setFormData((prev) => ({
-            ...prev,
-            role: defaultRole,
-        }));
-    }, [defaultRole]);
-
-    useEffect(() => {
-        if (formData.district_id) {
-            loadBlocksByDistrict(formData.district_id);
-        }
-    }, [formData.district_id, loadBlocksByDistrict]);
-
-    useEffect(() => {
-        if (formData.block_id) {
-            loadGpsByBlock(formData.block_id);
-        }
-    }, [formData.block_id, loadGpsByBlock]);
-
-    useEffect(() => {
-        if (
-            formData.role === "Gramdoot" ||
-            formData.role === "Audit GD" ||
-            formData.role === "Dda (admin)"
-        ) {
-            setFormData((prev) => ({
-                ...prev,
-                district_id: "",
-                block_id: "",
-                gram_panchayat_id: "",
-            }));
-        }
-    }, [formData.role]);
-
+    // ── Handlers ──────────────────────────────────────────────────────
     const handleChange = (e) => {
         const { name, value } = e.target;
 
-        if (name === "role") {
+        if (name === "role_id") {
             setFormData((prev) => ({
                 ...prev,
-                [name]: value,
+                role_id: Number(value) || "",
                 district_id: "",
-                block_id: "",
+                block_id: showBlockSection ? "" : prev.block_id,
                 gram_panchayat_id: "",
             }));
             return;
@@ -152,9 +148,14 @@ export default function NewMember() {
         if (!formData.firstName) newErrors.firstName = "First name is required";
         if (!formData.lastName) newErrors.lastName = "Last name is required";
         if (!formData.gender) newErrors.gender = "Gender is required";
+        if (!formData.role_id) newErrors.role_id = "Role is required";
         if (!formData.district_id) newErrors.district_id = "District is required";
-        if (!formData.block_id) newErrors.block_id = "Block is required";
-        if (!formData.gram_panchayat_id) newErrors.gram_panchayat_id = "Gram Panchayat is required";
+        if (showBlockSection && !formData.block_id) newErrors.block_id = "Block is required";
+
+        // Only require GP if GPs are available from the API
+        if (showBlockSection && availableGPs.length > 0 && !formData.gram_panchayat_id) {
+            newErrors.gram_panchayat_id = "Gram Panchayat is required";
+        }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -172,15 +173,15 @@ export default function NewMember() {
                 email: formData.email,
                 password: formData.password,
                 mobile: formData.mobile,
-                role_id: formData.role === "Gramdoot" ? 8 : 7,
+                role_id: formData.role_id,
                 firstName: formData.firstName,
                 lastName: formData.lastName,
                 gender: formData.gender,
                 fatherName: "NA",
                 dob: "1990-01-01",
                 address: "Default Address",
-                district_id: formData.district_id || currentUser.working_zone.district_id,
-                block_id: formData.block_id || currentUser.working_zone.block_id,
+                district_id: formData.district_id,
+                block_id: formData.block_id,
                 village_id: 1,
                 pincode: "700001",
                 gram_panchayat_id: formData.gram_panchayat_id || 1,
@@ -190,8 +191,8 @@ export default function NewMember() {
                 ifsc_code: "SBIN0000001",
                 branch_name: "Default Branch",
                 account_type: "Savings",
-                wz_district_id: currentUser.working_zone.district_id,
-                wz_block_id: currentUser.working_zone.block_id,
+                wz_district_id: formData.district_id,
+                wz_block_id: formData.block_id,
             });
 
             console.log("SUCCESS:", result);
@@ -202,7 +203,7 @@ export default function NewMember() {
                 mobile: "",
                 password: "",
                 confirmPassword: "",
-                role: defaultRole,
+                role_id: availableRoles.length > 0 ? availableRoles[0].id : "",
                 firstName: "",
                 lastName: "",
                 gender: "",
@@ -219,6 +220,10 @@ export default function NewMember() {
         }
     };
 
+    const selectedRoleName = availableRoles.find((r) => r.id === formData.role_id)?.name || "";
+    const filteredBlocks = getFilteredBlocks();
+    const filteredGPs = getFilteredGPs();
+
     return (
         <main className="grow w-full px-4 py-8">
             <div className="max-w-6xl mx-auto">
@@ -226,184 +231,196 @@ export default function NewMember() {
                     New Member
                 </h2>
 
-                <div className="border border-gray-200 p-6">
-                    <form onSubmit={handleSubmit}>
-                        <div className="grid grid-cols-4 gap-4 mb-6">
-                            <Field label="Email *" error={errors.email}>
-                                <input
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
-                                />
-                            </Field>
+                {subRolesLoading ? (
+                    <div className="border border-gray-200 p-6 text-center text-gray-500">
+                        Loading form options...
+                    </div>
+                ) : (
+                    <div className="border border-gray-200 p-6">
+                        <form onSubmit={handleSubmit}>
+                            <div className="grid grid-cols-4 gap-4 mb-6">
+                                <Field label="Email *" error={errors.email}>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                    />
+                                </Field>
 
-                            <Field label="Mobile *" error={errors.mobile}>
-                                <input
-                                    type="text"
-                                    name="mobile"
-                                    value={formData.mobile}
-                                    onChange={handleChange}
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
-                                />
-                            </Field>
-
-                            <Field label="Password *" error={errors.password}>
-                                <input
-                                    type="password"
-                                    name="password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
-                                />
-                            </Field>
-
-                            <Field label="Confirm Password *" error={errors.confirmPassword}>
-                                <input
-                                    type="password"
-                                    name="confirmPassword"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
-                                />
-                            </Field>
-                        </div>
-
-                        <div className="grid grid-cols-4 gap-4 mb-6">
-                            <Field label="Role *">
-                                {isAdminMemberPage ? (
+                                <Field label="Mobile *" error={errors.mobile}>
                                     <input
                                         type="text"
-                                        value="Dda (admin)"
-                                        readOnly
-                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm bg-gray-100 text-gray-700"
+                                        name="mobile"
+                                        value={formData.mobile}
+                                        onChange={handleChange}
+                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
                                     />
-                                ) : (
+                                </Field>
+
+                                <Field label="Password *" error={errors.password}>
+                                    <input
+                                        type="password"
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                    />
+                                </Field>
+
+                                <Field label="Confirm Password *" error={errors.confirmPassword}>
+                                    <input
+                                        type="password"
+                                        name="confirmPassword"
+                                        value={formData.confirmPassword}
+                                        onChange={handleChange}
+                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                    />
+                                </Field>
+                            </div>
+
+                            <div className="grid grid-cols-4 gap-4 mb-6">
+                                <Field label="Role *" error={errors.role_id}>
+                                    {availableRoles.length <= 1 ? (
+                                        <input
+                                            type="text"
+                                            value={selectedRoleName}
+                                            readOnly
+                                            className="border border-gray-300 rounded px-3 py-1.5 text-sm bg-gray-100 text-gray-700"
+                                        />
+                                    ) : (
+                                        <select
+                                            name="role_id"
+                                            value={formData.role_id}
+                                            onChange={handleChange}
+                                            className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                        >
+                                            {availableRoles.map((role) => (
+                                                <option key={role.id} value={role.id}>
+                                                    {role.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </Field>
+
+                                <Field label="First Name *" error={errors.firstName}>
+                                    <input
+                                        type="text"
+                                        name="firstName"
+                                        value={formData.firstName}
+                                        onChange={handleChange}
+                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                    />
+                                </Field>
+
+                                <Field label="Last Name *" error={errors.lastName}>
+                                    <input
+                                        type="text"
+                                        name="lastName"
+                                        value={formData.lastName}
+                                        onChange={handleChange}
+                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                                    />
+                                </Field>
+
+                                <Field label="Gender *" error={errors.gender}>
                                     <select
-                                        name="role"
-                                        value={formData.role}
+                                        name="gender"
+                                        value={formData.gender}
                                         onChange={handleChange}
                                         className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
                                     >
-                                        <option value="Gramdoot">Gramdoot</option>
-                                        <option value="Audit GD">Audit GD</option>
+                                        <option value="">Select</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="other">Other</option>
                                     </select>
+                                </Field>
+                            </div>
+
+                            <div className={`grid grid-cols-${showBlockSection ? (availableGPs.length > 0 ? 3 : 2) : 1} gap-4 mb-6`}>
+                                <Field label="District *" error={errors.district_id}>
+                                    <select
+                                        name="district_id"
+                                        value={formData.district_id}
+                                        onChange={handleDistrictChange}
+                                        className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
+                                    >
+                                        <option value="">Select District</option>
+                                        {availableDistricts.map((district) => (
+                                            <option key={district.id} value={district.id}>
+                                                {district.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </Field>
+
+                                {showBlockSection && (
+                                    <Field label="Block *" error={errors.block_id}>
+                                        <select
+                                            name="block_id"
+                                            value={formData.block_id}
+                                            onChange={handleBlockChange}
+                                            disabled={!formData.district_id}
+                                            className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
+                                        >
+                                            <option value="">Select Block</option>
+                                            {filteredBlocks.length > 0 ? (
+                                                filteredBlocks.map((block) => (
+                                                    <option key={block.id} value={block.id}>
+                                                        {block.name}
+                                                    </option>
+                                                ))
+                                            ) : (
+                                                <option disabled>No blocks available</option>
+                                            )}
+                                        </select>
+                                    </Field>
                                 )}
-                            </Field>
 
-                            <Field label="First Name *" error={errors.firstName}>
-                                <input
-                                    type="text"
-                                    name="firstName"
-                                    value={formData.firstName}
-                                    onChange={handleChange}
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
-                                />
-                            </Field>
+                                {showBlockSection && availableGPs.length > 0 && (
+                                    <Field label="Gram Panchayat *" error={errors.gram_panchayat_id}>
+                                        <select
+                                            name="gram_panchayat_id"
+                                            value={formData.gram_panchayat_id}
+                                            onChange={(e) => {
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    gram_panchayat_id: Number(e.target.value) || "",
+                                                }));
+                                            }}
+                                            disabled={!formData.block_id}
+                                            className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
+                                        >
+                                            <option value="">Select GP</option>
+                                            {filteredGPs.length > 0 ? (
+                                                filteredGPs.map((gp) => (
+                                                    <option key={gp.id} value={gp.id}>
+                                                        {gp.name}
+                                                    </option>
+                                                ))
+                                            ) : (
+                                                <option disabled>No GPs available</option>
+                                            )}
+                                        </select>
+                                    </Field>
+                                )}
+                            </div>
 
-                            <Field label="Last Name *" error={errors.lastName}>
-                                <input
-                                    type="text"
-                                    name="lastName"
-                                    value={formData.lastName}
-                                    onChange={handleChange}
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
-                                />
-                            </Field>
-
-                            <Field label="Gender *" error={errors.gender}>
-                                <select
-                                    name="gender"
-                                    value={formData.gender}
-                                    onChange={handleChange}
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9]"
+                            <div className="flex justify-center mt-8">
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-6 py-2 rounded disabled:opacity-50"
                                 >
-                                    <option value="">Select</option>
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </Field>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-4 mb-6">
-                            <Field label="District *" error={errors.district_id}>
-                                <select
-                                    name="district_id"
-                                    value={formData.district_id}
-                                    onChange={handleDistrictChange}
-                                    disabled={dataLoading || locationLoading.districts}
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
-                                >
-                                    <option value="">Select District</option>
-                                    {getAvailableDistricts().map((district) => (
-                                        <option key={district.id} value={district.id}>
-                                            {district.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </Field>
-
-                            <Field label="Block *" error={errors.block_id}>
-                                <select
-                                    name="block_id"
-                                    value={formData.block_id}
-                                    onChange={handleBlockChange}
-                                    disabled={!formData.district_id || dataLoading || locationLoading.blocks}
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
-                                >
-                                    <option value="">Select Block</option>
-                                    {getAvailableBlocks().length > 0 ? (
-                                        getAvailableBlocks().map((block) => (
-                                            <option key={block.id} value={block.id}>
-                                                {block.name}
-                                            </option>
-                                        ))
-                                    ) : (
-                                        <option disabled>No blocks available</option>
-                                    )}
-                                </select>
-                            </Field>
-
-                            <Field label="Gram Panchayat *" error={errors.gram_panchayat_id}>
-                                <select
-                                    name="gram_panchayat_id"
-                                    value={formData.gram_panchayat_id}
-                                    onChange={(e) => {
-                                        setFormData((prev) => ({
-                                            ...prev,
-                                            gram_panchayat_id: Number(e.target.value) || "",
-                                        }));
-                                    }}
-                                    disabled={!formData.block_id || dataLoading || locationLoading.gramPanchayats}
-                                    className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#3eb0c9] disabled:bg-gray-100"
-                                >
-                                    <option value="">Select GP</option>
-                                    {getAvailableGPs().length > 0 ? (
-                                        getAvailableGPs().map((gp) => (
-                                            <option key={gp.id} value={gp.id}>
-                                                {gp.name}
-                                            </option>
-                                        ))
-                                    ) : (
-                                        <option disabled>No GPs available</option>
-                                    )}
-                                </select>
-                            </Field>
-                        </div>
-
-                        <div className="flex justify-center mt-8">
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="bg-[#3eb0c9] hover:bg-[#2a9ab0] text-white text-sm font-medium px-6 py-2 rounded disabled:opacity-50"
-                            >
-                                {loading ? "Submitting..." : "Submit"}
-                            </button>
-                        </div>
-                    </form>
-                </div>
+                                    {loading ? "Submitting..." : "Submit"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                )}
             </div>
         </main>
     );
